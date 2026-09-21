@@ -1,1 +1,1 @@
-# Proyecto_PrograPro
+# Proyecto_Longaniza
