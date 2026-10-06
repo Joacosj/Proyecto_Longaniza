@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ideator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ideator}
+      POSTGRES_DB: ${POSTGRES_DB:-ideator}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ideator} -d ${POSTGRES_DB:-ideator}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      APP_ENV: development
+      PORT: 8000
+      DATABASE_URL: postgres://${POSTGRES_USER:-ideator}:${POSTGRES_PASSWORD:-ideator}@db:5432/${POSTGRES_DB:-ideator}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      API_PROXY_TARGET: http://backend:8000
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  db_data:
