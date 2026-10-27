@@ -9,6 +9,8 @@
   },
   "imports": {
     "hono": "npm:hono@^4.6.0",
+    "hono/": "npm:/hono@^4.6.0/",
+    "bcryptjs": "npm:bcryptjs@^3.0.2",
     "postgres": "npm:postgres@^3.4.5"
   },
   "fmt": {

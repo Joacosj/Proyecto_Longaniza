@@ -9,6 +9,9 @@ const app = createApp({
   pingDb: async () => {
     await sql`SELECT 1`;
   },
+  sql,
+  sessionSecret: config.sessionSecret,
+  secureCookies: config.env === "production",
 });
 
 Deno.serve({ port: config.port, hostname: "0.0.0.0" }, app.fetch);

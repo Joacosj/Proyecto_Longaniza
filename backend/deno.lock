@@ -1,10 +1,15 @@
 {
   "version": "5",
   "specifiers": {
+    "npm:bcryptjs@^3.0.2": "3.0.3",
     "npm:hono@^4.6.0": "4.13.13",
     "npm:postgres@^3.4.5": "3.4.9"
   },
   "npm": {
+    "bcryptjs@3.0.3": {
+      "integrity": "sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==",
+      "bin": true
+    },
     "hono@4.13.13": {
       "integrity": "sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA=="
     },
@@ -14,6 +19,7 @@
   },
   "workspace": {
     "dependencies": [
+      "npm:bcryptjs@^3.0.2",
       "npm:hono@^4.6.0",
       "npm:postgres@^3.4.5"
     ]

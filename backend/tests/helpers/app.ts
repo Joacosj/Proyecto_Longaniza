@@ -1,0 +1,82 @@
+import { type AppDeps, createApp } from "../../src/app.ts";
+import type { Sql } from "../../src/db/client.ts";
+
+// Hash rápido en pruebas; en producción se usa el costo por defecto.
+Deno.env.set("BCRYPT_COST", "4");
+
+export const TEST_SECRET = "test-secret-solo-para-pruebas-0123456789";
+
+/** Una base que falla si alguien la usa: para probar rutas que no deberían tocarla. */
+const noDb = new Proxy(() => {}, {
+  get: () => {
+    throw new Error("Esta prueba no debería usar la base de datos");
+  },
+  apply: () => {
+    throw new Error("Esta prueba no debería usar la base de datos");
+  },
+}) as unknown as Sql;
+
+export function buildApp(overrides: Partial<AppDeps> = {}) {
+  return createApp({
+    pingDb: () => Promise.resolve(),
+    sql: noDb,
+    sessionSecret: TEST_SECRET,
+    ...overrides,
+  });
+}
+
+type App = ReturnType<typeof buildApp>;
+
+/**
+ * Cliente que guarda la cookie de sesión entre llamadas, como lo haría un navegador.
+ * Cada instancia representa a un usuario distinto.
+ */
+export class TestClient {
+  cookie = "";
+
+  constructor(private app: App) {}
+
+  async request(method: string, path: string, body?: unknown): Promise<Response> {
+    const headers: Record<string, string> = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (this.cookie) headers["Cookie"] = this.cookie;
+
+    const res = await this.app.request(path, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+
+    for (const raw of res.headers.getSetCookie()) {
+      const [pair] = raw.split(";");
+      const [name, value] = pair.split("=");
+      if (name !== "ideator_session") continue;
+      const expired = /max-age=0/i.test(raw) || /expires=Thu, 01 Jan 1970/i.test(raw);
+      this.cookie = expired || !value ? "" : `${name}=${value}`;
+    }
+    return res;
+  }
+
+  get(path: string) {
+    return this.request("GET", path);
+  }
+  post(path: string, body?: unknown) {
+    return this.request("POST", path, body);
+  }
+  put(path: string, body?: unknown) {
+    return this.request("PUT", path, body);
+  }
+  patch(path: string, body?: unknown) {
+    return this.request("PATCH", path, body);
+  }
+  delete(path: string) {
+    return this.request("DELETE", path);
+  }
+
+  /** Registra un usuario y queda con su sesión. */
+  async register(email: string, name = "Usuario", password = "contraseña-segura") {
+    const res = await this.post("/api/auth/register", { email, name, password });
+    if (res.status !== 201) throw new Error(`register falló: ${res.status} ${await res.text()}`);
+    return (await res.json()).user as { id: string; email: string; name: string };
+  }
+}
