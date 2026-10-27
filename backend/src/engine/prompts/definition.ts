@@ -86,6 +86,11 @@ Reglas del borrador:
 - Cada funcionalidad del MVP tiene al menos un requisito.
 - Cada paso del recorrido principal lo realiza un rol definido.
 - Escribe todo para alguien que no estuvo en la conversación: nada de "lo que dijimos antes".
+- No dejes alternativas abiertas ("A o B", "si se usa X…"): elige una opción concreta y
+  escríbela. Quien implemente no podrá preguntar cuál era.
+- Cada tipo de cuenta debe tener su ciclo de vida completo: cómo se crea, cómo inicia sesión,
+  cómo cambia su contraseña o credencial (por ejemplo, una contraseña inicial entregada por un
+  administrador) y cómo se desactiva. Lo que quede fuera del MVP, dilo explícitamente.
 - Incluye al menos un caso borde por cada situación de la sección 7 que aplique.
 
 ## Formato de respuesta
