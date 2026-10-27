@@ -77,14 +77,15 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
 - **Listo cuando:** existe una prueba que genera los documentos del ejemplo y verifica que todas
   las tablas, endpoints y pantallas aparecen.
 
-### B4. Catálogo de arquitecturas (3 pts)
-- `engine/architectures.ts` con cinco `ArchitectureTemplate`. El profesor no ha entregado los
-  cuatro escenarios oficiales, así que se usa este catálogo provisorio, fácil de reemplazar:
-  1. `monolith`: monolito en contenedores con Docker Compose, NGINX y PostgreSQL en una VM.
-  2. `baas`: Supabase (base, autenticación, almacenamiento) con frontend en Azure Static Web Apps.
-  3. `microservices`: servicios en contenedores, NGINX como API gateway, secretos en Azure Key Vault.
-  4. `realtime`: GraphQL con suscripciones por WebSockets para colaboración en vivo.
-  5. `ai-agents` (propuesta del grupo): Vertex AI y Google Agent Development Kit.
+### B4. Catálogo de arquitecturas (3 pts) — hecho
+- `engine/architectures.ts` contiene las cinco arquitecturas base definidas por el grupo:
+  1. `modular-monolith`: monolito modular moderno.
+  2. `jamstack-baas`: Jamstack / Serverless + BaaS.
+  3. `microservices`: microservicios contenerizados.
+  4. `event-driven-cqrs`: orientada a eventos (EDA) con CQRS.
+  5. `edge-first`: edge-first distribuida (quinto escenario, propuesta del grupo).
+- El catálogo describe opciones. La etapa de arquitectura (B7) debe elegir una y fijar
+  tecnologías concretas, sin dejar alternativas abiertas como "Prisma o Drizzle".
 
 ### B5. Cliente de IA (3 pts) — hecho
 - `engine/llm.ts`: función `completeJson(system, messages, schemaDescription)` usando
