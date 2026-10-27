@@ -1,12 +1,16 @@
 import { Hono } from "hono";
 import type { AuthDeps } from "./auth/session.ts";
+import type { Engine } from "./engine/types.ts";
 import { ApiError } from "./http/errors.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { type HealthDeps, healthRoutes } from "./routes/health.ts";
 import { invitationRoutes } from "./routes/members.ts";
 import { projectRoutes } from "./routes/projects.ts";
 
-export type AppDeps = HealthDeps & AuthDeps;
+export type AppDeps = HealthDeps & AuthDeps & {
+  /** Motor de IA (mitad B). Mientras no esté listo, `createFakeEngine()`. */
+  engine: Engine;
+};
 
 /**
  * Construye la app sin abrir conexiones, para poder probarla con dependencias falsas.

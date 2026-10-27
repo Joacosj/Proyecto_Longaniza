@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { requireUser } from "../auth/session.ts";
-import type { AuthDeps } from "../auth/session.ts";
 import { type ProjectEnv, requireProjectRole } from "../auth/roles.ts";
 import type { Sql } from "../db/client.ts";
 import { readJsonObject, Validator } from "../http/body.ts";
@@ -8,11 +7,12 @@ import { ApiError } from "../http/errors.ts";
 import { auditRepo } from "../repositories/audit.ts";
 import { projectsRepo } from "../repositories/projects.ts";
 import { registerMemberRoutes } from "./members.ts";
+import { registerStageRoutes, type StageDeps } from "./stages.ts";
 
 export const MAX_NAME = 120;
 export const MAX_IDEA = 10_000;
 
-export function projectRoutes(deps: AuthDeps) {
+export function projectRoutes(deps: StageDeps) {
   const r = new Hono<ProjectEnv>();
   const projects = projectsRepo(deps.sql);
 
@@ -109,6 +109,7 @@ export function projectRoutes(deps: AuthDeps) {
   });
 
   registerMemberRoutes(r, deps);
+  registerStageRoutes(r, deps);
 
   return r;
 }

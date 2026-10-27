@@ -1,5 +1,6 @@
 import { type AppDeps, createApp } from "../../src/app.ts";
 import type { Sql } from "../../src/db/client.ts";
+import { createFakeEngine } from "../../src/engine/fake.ts";
 
 // Hash rápido en pruebas; en producción se usa el costo por defecto.
 Deno.env.set("BCRYPT_COST", "4");
@@ -21,6 +22,7 @@ export function buildApp(overrides: Partial<AppDeps> = {}) {
     pingDb: () => Promise.resolve(),
     sql: noDb,
     sessionSecret: TEST_SECRET,
+    engine: createFakeEngine(),
     ...overrides,
   });
 }
