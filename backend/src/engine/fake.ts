@@ -6,7 +6,7 @@
 import type { ArtifactByStage } from "../contracts/artifacts.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
-const SAMPLE: Omit<ArtifactByStage, "review"> = {
+const SAMPLE: { [K in GeneratableStage]: ArtifactByStage[K] } = {
   definition: {
     problem: {
       statement: "Ejemplo: los vecinos no tienen cómo reportar problemas del barrio.",
@@ -74,7 +74,10 @@ export function createFakeEngine(): Engine {
           : [],
       }),
     generate: <K extends GeneratableStage>({ stage }: { stage: K }) =>
-      Promise.resolve({ artifact: structuredClone(SAMPLE[stage]), questions: [] }),
+      Promise.resolve({
+        artifact: structuredClone(SAMPLE[stage]) as ArtifactByStage[K],
+        questions: [],
+      }),
     checkConsistency: () => [],
     renderDocuments: (ctx) => ({
       productSpec: `# ${ctx.projectName}\n\n(documento de ejemplo)\n`,
