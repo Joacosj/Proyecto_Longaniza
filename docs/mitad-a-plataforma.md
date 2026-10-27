@@ -18,7 +18,9 @@ El proyecto está dividido en dos mitades:
 
 La unión entre ambas es la interfaz `Engine` en `backend/src/engine/types.ts`. Esta mitad la
 **consume**. Mientras la mitad B no termine, usa `createFakeEngine()` de
-`backend/src/engine/fake.ts`, que devuelve datos de ejemplo válidos.
+`backend/src/engine/fake.ts`: `generate` devuelve las etapas de un proyecto de ejemplo completo
+(reservas de salas), y `checkConsistency`, `renderDocuments` y `listArchitectures` ya son los
+reales. Solo `converse` es de relleno.
 
 ## Stack y reglas
 
