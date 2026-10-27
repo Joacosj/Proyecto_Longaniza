@@ -44,3 +44,32 @@ export async function hashToken(token: string, secret: string): Promise<string> 
   );
   return toHex(sig);
 }
+
+/**
+ * Firma un valor (JSON) para guardarlo en una cookie que el cliente no puede alterar.
+ * Formato: base64url(json).hmac
+ */
+export async function signValue(value: unknown, secret: string): Promise<string> {
+  const payload = toBase64Url(new TextEncoder().encode(JSON.stringify(value)));
+  return `${payload}.${await hashToken(payload, secret)}`;
+}
+
+/** Verifica y devuelve el valor firmado, o undefined si fue alterado. */
+export async function verifySignedValue<T>(signed: string, secret: string): Promise<T | undefined> {
+  const dot = signed.lastIndexOf(".");
+  if (dot <= 0) return undefined;
+  const payload = signed.slice(0, dot);
+  const sig = signed.slice(dot + 1);
+  const expected = await hashToken(payload, secret);
+  if (sig.length !== expected.length) return undefined;
+  let diff = 0;
+  for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i);
+  if (diff !== 0) return undefined;
+  try {
+    const b64 = payload.replaceAll("-", "+").replaceAll("_", "/");
+    const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+  } catch {
+    return undefined;
+  }
+}

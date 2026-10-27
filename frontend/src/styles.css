@@ -151,6 +151,10 @@ label small { font-weight: 400; }
 .auth-intro .lede { font-size: 1.25rem; max-width: 30ch; color: var(--graphite); }
 .auth-form { background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--radius); padding: var(--s6) var(--s5); }
 
+.button.sso { justify-content: center; border-color: var(--rule); background: #fff; font-weight: 600; }
+.button.sso:hover { border-color: var(--ink); }
+.or { text-align: center; font-size: 0.875rem; margin: 0; }
+
 /* ---------------------------------------------------------------- proyectos */
 .project-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
 .project-row {

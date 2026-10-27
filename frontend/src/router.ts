@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 
 export type Route =
-  | { name: "login"; next?: string }
+  | { name: "login"; next?: string; error?: string }
   | { name: "register"; next?: string }
   | { name: "projects" }
   | { name: "project"; id: string; tab: "stages" | "members" | "review" | "activity"; stage?: string }
@@ -19,7 +19,9 @@ export function parse(hash: string): Route {
   const next = params.get("next") ?? undefined;
 
   if (parts.length === 0) return { name: "projects" };
-  if (parts[0] === "login") return { name: "login", next };
+  if (parts[0] === "login") {
+    return { name: "login", next, error: params.get("error") ?? undefined };
+  }
   if (parts[0] === "registro") return { name: "register", next };
   if (parts[0] === "invitaciones" && parts[1]) return { name: "invitation", token: parts[1] };
   if (parts[0] === "proyectos") {

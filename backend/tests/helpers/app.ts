@@ -34,14 +34,18 @@ type App = ReturnType<typeof buildApp>;
  * Cada instancia representa a un usuario distinto.
  */
 export class TestClient {
+  /** Cookie de sesión (`ideator_session=...`), o "" si no hay. */
   cookie = "";
+  /** Otras cookies que el servidor dejó (ej. la del flujo SSO). */
+  extra = new Map<string, string>();
 
   constructor(private app: App) {}
 
   async request(method: string, path: string, body?: unknown): Promise<Response> {
     const headers: Record<string, string> = {};
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    if (this.cookie) headers["Cookie"] = this.cookie;
+    const all = [this.cookie, ...[...this.extra].map(([k, v]) => `${k}=${v}`)].filter(Boolean);
+    if (all.length) headers["Cookie"] = all.join("; ");
 
     const res = await this.app.request(path, {
       method,
@@ -51,10 +55,17 @@ export class TestClient {
 
     for (const raw of res.headers.getSetCookie()) {
       const [pair] = raw.split(";");
-      const [name, value] = pair.split("=");
-      if (name !== "ideator_session") continue;
+      const eq = pair.indexOf("=");
+      const name = pair.slice(0, eq);
+      const value = pair.slice(eq + 1);
       const expired = /max-age=0/i.test(raw) || /expires=Thu, 01 Jan 1970/i.test(raw);
-      this.cookie = expired || !value ? "" : `${name}=${value}`;
+      if (name === "ideator_session") {
+        this.cookie = expired || !value ? "" : `${name}=${value}`;
+      } else if (expired || !value) {
+        this.extra.delete(name);
+      } else {
+        this.extra.set(name, value);
+      }
     }
     return res;
   }

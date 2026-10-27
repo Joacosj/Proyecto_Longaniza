@@ -5,6 +5,9 @@ export interface Config {
   env: "development" | "test" | "production";
   /** Clave para firmar (HMAC) los tokens de sesión antes de guardarlos en la base. */
   sessionSecret: string;
+  /** URL pública del frontend (el navegador vuelve aquí después del SSO). */
+  appUrl: string;
+  google?: { clientId: string; clientSecret: string };
 }
 
 export function loadConfig(): Config {
@@ -19,5 +22,14 @@ export function loadConfig(): Config {
       "postgres://ideator:ideator@localhost:5432/ideator",
     env,
     sessionSecret: sessionSecret || "dev-only-secret-change-me",
+    appUrl: Deno.env.get("APP_URL") ?? "http://localhost:5173",
+    google: googleConfig(),
   };
+}
+
+/** Google solo se activa si están ambas credenciales. */
+function googleConfig(): Config["google"] {
+  const clientId = Deno.env.get("GOOGLE_CLIENT_ID") ?? "";
+  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET") ?? "";
+  return clientId && clientSecret ? { clientId, clientSecret } : undefined;
 }

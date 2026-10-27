@@ -77,6 +77,10 @@ export const client = {
     register: (email: string, name: string, password: string) =>
       api<{ user: User }>("/auth/register", json("POST", { email, name, password })),
     logout: () => api<void>("/auth/logout", json("POST")),
+    ssoProviders: () => api<{ providers: string[] }>("/auth/sso/providers"),
+    /** Navegación completa (no fetch): el proveedor necesita redirigir al navegador. */
+    ssoStartUrl: (provider: string, next?: string) =>
+      `/api/auth/sso/${provider}/start${next ? `?next=${encodeURIComponent(next)}` : ""}`,
   },
 
   projects: {

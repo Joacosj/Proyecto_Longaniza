@@ -10,5 +10,5 @@ export function AuthPagesRedirect({ route }: { route: Extract<Route, { name: "lo
     if (user) navigate(route.next ?? paths.projects());
   }, [user, route.next]);
   if (user) return null;
-  return route.name === "login" ? <LoginPage next={route.next} /> : <RegisterPage next={route.next} />;
+  return route.name === "login" ? <LoginPage next={route.next} ssoError={route.error} /> : <RegisterPage next={route.next} />;
 }
