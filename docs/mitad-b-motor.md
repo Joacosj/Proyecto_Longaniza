@@ -48,34 +48,24 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
 
 ## Tareas, en orden
 
-### B1. Proyecto de ejemplo completo (3 pts)
-- `backend/tests/engine/fixtures/ejemplo.ts`: un `ProjectContext` con las cinco etapas llenas y
-  coherentes para un producto pequeño realista (por ejemplo, reservas de salas de estudio con
-  dos roles). Se usa en todas las pruebas siguientes.
+### B1. Proyecto de ejemplo completo (3 pts) — hecho
+- `backend/src/engine/ejemplo.ts`: reservas de salas de estudio, con dos roles, cuatro
+  funcionalidades, tres tablas, siete endpoints y cinco pantallas, coherente de punta a punta.
+  Lo usan las pruebas y el motor falso.
 
-### B2. Validador de consistencia (5 pts)
-- `checkConsistency(context)` en `engine/consistency.ts`. Determinista, sin IA. Reglas mínimas:
-  - Cada requisito apunta a una funcionalidad del MVP que existe; cada rol citado existe.
-  - Cada entidad soporta al menos un requisito; cada relación apunta a entidades y columnas que existen.
-  - Cada endpoint usa entidades existentes y roles existentes; los endpoints de proyecto
-    documentan 401 y 403.
-  - Cada acción de pantalla llama a un endpoint existente o navega a una pantalla existente;
-    cada funcionalidad del MVP aparece en al menos una pantalla; no hay pantallas huérfanas.
-  - La arquitectura elegida existe en el catálogo.
-- **Listo cuando:** el ejemplo de B1 da cero inconsistencias, y hay una prueba por regla que
-  rompe el ejemplo a propósito y verifica que se detecta.
+### B2. Validador de consistencia (5 pts) — hecho
+- `checkConsistency(context)` en `engine/consistency.ts`. Determinista, sin IA. Solo revisa las
+  etapas presentes. Cubre referencias entre etapas (roles, funcionalidades, requisitos,
+  entidades, columnas, endpoints y pantallas), 401 y 403 documentados, rutas y ids duplicados,
+  pantallas inalcanzables, endpoints sin uso, funcionalidades sin pantalla, acciones visibles
+  para roles que el endpoint no permite, y tecnologías con alternativas abiertas.
+- `hasCritical(issues)` indica si hay que bloquear la generación final.
+- El ejemplo da cero inconsistencias y hay una prueba por regla.
 
-### B3. Generador de documentos Markdown (5 pts)
+### B3. Generador de documentos Markdown (5 pts) — hecho
 - `renderDocuments(context)` en `engine/documents.ts`. Determinista, sin IA.
-- `product_spec`: problema, usuarios y roles, resultados esperados, MVP incluido y excluido,
-  recorrido principal, requisitos, reglas de negocio, casos borde, modelo de datos (tablas con
-  columnas, tipos, claves y restricciones, más un diagrama Mermaid), cada endpoint con entradas,
-  salidas y códigos, y cada pantalla con sus acciones y el mapa de navegación.
-- `architecture`: arquitectura elegida y por qué, tecnologías, despliegue, variables de entorno,
-  autenticación, SSO, sesión, autorización y observabilidad.
-- Ambos deben entenderse sin conocer Ideator ni la conversación: nada de "como se dijo antes".
-- **Listo cuando:** existe una prueba que genera los documentos del ejemplo y verifica que todas
-  las tablas, endpoints y pantallas aparecen.
+- Resultado del ejemplo en `docs/ejemplo-salida/` (regenerar con `deno task docs:ejemplo`).
+  Los diagramas Mermaid se verificaron con Mermaid CLI.
 
 ### B4. Catálogo de arquitecturas (3 pts) — hecho
 - `engine/architectures.ts` contiene las cinco arquitecturas base definidas por el grupo:
@@ -105,15 +95,18 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
   objeto parseado y debe lanzar un Error con un mensaje claro si no cumple el formato; ese
   mensaje se le pasa a la IA para que corrija su respuesta una vez.
 
-### B6. Etapa 1 con preguntas bloqueantes (8 pts)
-- `converse()` para `definition`. El prompt debe:
-  - Cubrir problema, contexto, usuarios y roles, resultados esperados, MVP dentro y fuera,
-    recorrido principal, requisitos, reglas, integraciones, seguridad y casos borde.
-  - Marcar como bloqueante solo lo que cambia el modelo de datos, el backend, la interfaz o la
-    arquitectura (ej. si hay distintos roles, si algo es anónimo, si hay pagos). Lo demás va como
-    pregunta no bloqueante.
-  - No inventar respuestas ni repetir preguntas ya respondidas.
-  - Devolver `artifactDraft` cuando haya información suficiente.
+### B6. Etapa 1 con preguntas bloqueantes (8 pts) — hecho, falta afinar con casos reales
+- `engine/definition.ts` (`converseDefinition`) y las instrucciones en `engine/prompts/definition.ts`.
+- La IA cubre problema, usuarios, resultados, MVP, recorrido, requisitos, reglas,
+  integraciones, seguridad y casos borde, con máximo 4 preguntas por turno.
+- Reglas que aplica el código, no la IA:
+  - Respuesta validada (`engine/validate.ts`); si falla, se le pide corregir con la ruta exacta.
+  - Un borrador con contradicciones internas se rechaza y se pide corregirlo.
+  - Se descartan preguntas repetidas (ignorando tildes y mayúsculas).
+  - Bloqueantes primero; una bloqueante debe indicar qué etapas afecta.
+  - Si queda alguna bloqueante abierta, no se entrega borrador.
+- Probar con la IA real: `deno task conversar` (desde `backend/`).
+- Pendiente: probar varias ideas reales y ajustar el prompt según lo que pregunte de más o de menos.
 
 ### B7. Generación de las etapas siguientes (8 pts)
 - `generate()` para `database`, `backend`, `frontend` y `architecture`, siempre usando las

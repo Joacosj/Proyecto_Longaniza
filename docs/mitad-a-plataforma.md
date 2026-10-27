@@ -18,7 +18,14 @@ El proyecto está dividido en dos mitades:
 
 La unión entre ambas es la interfaz `Engine` en `backend/src/engine/types.ts`. Esta mitad la
 **consume**. Mientras la mitad B no termine, usa `createFakeEngine()` de
-`backend/src/engine/fake.ts`, que devuelve datos de ejemplo válidos.
+`backend/src/engine/fake.ts`: `generate` devuelve las etapas de un proyecto de ejemplo completo
+(reservas de salas), y `checkConsistency`, `renderDocuments` y `listArchitectures` ya son los
+reales. Solo `converse` es de relleno.
+
+El motor real ya existe: `createEngineFromEnv()` en `backend/src/engine/engine.ts` (requiere las
+variables `LLM_*` del `.env`). La etapa de definición ya conversa con la IA; las demás etapas
+todavía devuelven el ejemplo. Para usarlo, cambia `createFakeEngine()` por
+`createEngineFromEnv()` en `main.ts`. En las pruebas automáticas sigue usando el falso.
 
 ## Stack y reglas
 
