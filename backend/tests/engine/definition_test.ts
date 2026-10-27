@@ -119,6 +119,26 @@ Deno.test("como máximo 4 preguntas por turno, bloqueantes primero", async () =>
   assert.deepEqual(turn.newQuestions.map((q) => q.text), ["C", "E", "A", "B"]);
 });
 
+Deno.test("con preguntas abiertas, la lista no crece más allá de 4 (al menos una nueva)", async () => {
+  const nuevas = ["N1", "N2", "N3"].map((t) => pregunta(t, true));
+  const ctx = contexto();
+  ctx.openQuestions = ["A1", "A2", "A3"].map((text) => ({
+    stage: "definition" as const,
+    text,
+    isBlocking: true,
+  }));
+  let ai = fakeAi([{ reply: "ok", newQuestions: nuevas, artifactDraft: null }]);
+  let turn = await converseDefinition(ai.complete, { context: ctx, history: [], userMessage: "x" });
+  assert.deepEqual(turn.newQuestions.map((q) => q.text), ["N1"]);
+
+  ctx.openQuestions.push(
+    ...["A4", "A5"].map((text) => ({ stage: "definition" as const, text, isBlocking: true })),
+  );
+  ai = fakeAi([{ reply: "ok", newQuestions: nuevas, artifactDraft: null }]);
+  turn = await converseDefinition(ai.complete, { context: ctx, history: [], userMessage: "x" });
+  assert.equal(turn.newQuestions.length, 1);
+});
+
 Deno.test("entrega el borrador cuando no quedan bloqueantes", async () => {
   const ai = fakeAi([{ reply: "Listo.", newQuestions: [], artifactDraft: borrador() }]);
   const turn = await converseDefinition(ai.complete, {

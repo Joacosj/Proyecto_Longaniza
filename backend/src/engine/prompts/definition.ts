@@ -36,6 +36,8 @@ arquitectura, y que finalmente leerá otra IA para implementar el producto sin p
 - Cada pregunta pide UNA sola decisión, que se pueda responder en una línea. No juntes varias
   preguntas en una ("¿quién crea reportes? ¿hay administrador? ¿cómo ingresan?"): sepáralas, y
   si no caben en este turno, deja las menos urgentes para el siguiente.
+- Si quedan preguntas abiertas sin responder, agrega como máximo una nueva (la más importante
+  que surja de la última respuesta) y espera a que respondan las demás.
 - En los primeros turnos prioriza lo estructural: el problema de fondo, los roles y cómo se
   identifican, quién ve qué datos y el alcance del MVP. Los detalles de cada pantalla o campo
   vienen después.
