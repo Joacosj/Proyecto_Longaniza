@@ -199,14 +199,18 @@ export function stagesRepo(sql: Sql) {
     },
 
     /**
-     * Recalcula `projects.current_stage` (primera etapa no aprobada) y el estado del
-     * proyecto: `ready` si todas están aprobadas, `in_progress` si no.
+     * Recalcula `projects.current_stage` (primera etapa con contenido sin aprobar, o
+     * `review`) y el estado del proyecto: `ready` si las cinco etapas con contenido están
+     * aprobadas, `in_progress` si no. Una vez generados los documentos queda `generated`
+     * mientras no se reabra ninguna etapa.
      */
     async syncProjectProgress(projectId: string) {
       const rows = await sql<{ kind: StageKind; status: StageStatus }[]>`
         SELECT kind, status FROM stages WHERE project_id = ${projectId}`;
       const status = new Map(rows.map((r) => [r.kind, r.status]));
-      const current = STAGE_ORDER.find((k) => status.get(k) !== "approved");
+      // Mismo criterio que la generación de documentos: cuentan las cinco etapas con
+      // contenido. Con todas aprobadas, el proyecto está listo y va en "review".
+      const current = STAGE_ORDER.find((k) => k !== "review" && status.get(k) !== "approved");
       await sql`
         UPDATE projects SET
           current_stage = ${current ?? "review"},
