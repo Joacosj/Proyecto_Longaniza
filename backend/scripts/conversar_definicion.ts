@@ -4,7 +4,8 @@
  *
  * Comandos durante la conversación:
  *   <texto>            mensaje libre para la IA
- *   r <n> <respuesta>  responde la pregunta abierta número n
+ *   r <n> <respuesta>  responde la pregunta abierta número n (se pueden poner varias en
+ *                      una línea: "r 1 sí r 3 no")
  *   p <n>              pospone la pregunta n (solo si no es bloqueante)
  *   salir              termina
  */
@@ -38,30 +39,50 @@ while (true) {
   if (!input) continue;
   if (input === "salir") break;
 
-  const answer = input.match(/^r\s+(\d+)\s+(.+)$/s);
   const postpone = input.match(/^p\s+(\d+)$/);
-  if (answer || postpone) {
-    const n = Number((answer ?? postpone)![1]) - 1;
+  if (postpone) {
+    const n = Number(postpone[1]) - 1;
     const q = ctx.openQuestions[n];
-    if (!q) {
-      console.log("No existe esa pregunta.");
-      continue;
-    }
-    if (postpone) {
-      if (q.isBlocking) {
-        console.log("Es bloqueante: no se puede posponer.");
-        continue;
-      }
+    if (!q) console.log("No existe esa pregunta.");
+    else if (q.isBlocking) console.log("Es bloqueante: no se puede posponer.");
+    else {
       ctx.openQuestions.splice(n, 1);
       console.log("Pregunta pospuesta.");
+    }
+    continue;
+  }
+
+  const answers = parseAnswers(input);
+  if (answers.length) {
+    // Los números se refieren a la lista mostrada, así que se validan todos antes de quitar nada.
+    const missing = answers.filter((a) => !ctx.openQuestions[a.n - 1]).map((a) => a.n);
+    if (missing.length) {
+      console.log(`No existe la pregunta ${missing.join(", ")}.`);
       continue;
     }
-    ctx.openQuestions.splice(n, 1);
-    ctx.answeredQuestions.push({ stage: "definition", text: q.text, answer: answer![2] });
-    await turn(`Respondo: "${q.text}" → ${answer![2]}`);
+    const lines: string[] = [];
+    for (const a of [...answers].sort((x, y) => y.n - x.n)) {
+      const [q] = ctx.openQuestions.splice(a.n - 1, 1);
+      ctx.answeredQuestions.push({ stage: "definition", text: q.text, answer: a.text });
+      lines.unshift(`- "${q.text}" → ${a.text}`);
+    }
+    await turn(`Respondo:\n${lines.join("\n")}`);
   } else {
     await turn(input);
   }
+}
+
+/** Lee una o varias respuestas en una línea: "r 1 texto r 3 otro texto". */
+export function parseAnswers(input: string): { n: number; text: string }[] {
+  if (!/^r\s+\d+\s+\S/.test(input)) return [];
+  const out: { n: number; text: string }[] = [];
+  const parts = input.split(/(?:^|\s+)r\s+(\d+)\s+/).slice(1);
+  for (let i = 0; i < parts.length; i += 2) {
+    const text = parts[i + 1]?.trim();
+    if (text) out.push({ n: Number(parts[i]), text });
+  }
+  // Si un número se repite, vale la última respuesta.
+  return [...new Map(out.map((a) => [a.n, a])).values()];
 }
 
 async function turn(message: string) {
