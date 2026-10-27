@@ -86,7 +86,7 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
   4. `realtime`: GraphQL con suscripciones por WebSockets para colaboración en vivo.
   5. `ai-agents` (propuesta del grupo): Vertex AI y Google Agent Development Kit.
 
-### B5. Cliente de IA (3 pts)
+### B5. Cliente de IA (3 pts) — hecho
 - `engine/llm.ts`: función `completeJson(system, messages, schemaDescription)` usando
   `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`.
 - El proveedor es **Microsoft Foundry** (key entregada por la universidad), con su API
@@ -99,7 +99,10 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
   - Se puede usar el paquete `npm:openai` con `baseURL` y `apiKey`, o `fetch` directo.
 - Manejar error de red, timeout, 429 (límite de uso: reintentar con espera), 401 (key inválida)
   y respuesta no JSON, con errores claros.
-- Prueba de conexión: script `deno task llm:ping` que envía un mensaje corto e imprime la respuesta.
+- Prueba de conexión: `deno task llm:ping` (desde `backend/`, lee el `.env` de la raíz).
+- Uso: `completeJson(loadLlmConfig(), { system, messages, validate })`. `validate` recibe el
+  objeto parseado y debe lanzar un Error con un mensaje claro si no cumple el formato; ese
+  mensaje se le pasa a la IA para que corrija su respuesta una vez.
 
 ### B6. Etapa 1 con preguntas bloqueantes (8 pts)
 - `converse()` para `definition`. El prompt debe:
