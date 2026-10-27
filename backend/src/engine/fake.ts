@@ -5,6 +5,7 @@
  */
 import type { ArtifactByStage } from "../contracts/artifacts.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
+import { listArchitectures } from "./architectures.ts";
 
 const SAMPLE: { [K in GeneratableStage]: ArtifactByStage[K] } = {
   definition: {
@@ -49,7 +50,7 @@ const SAMPLE: { [K in GeneratableStage]: ArtifactByStage[K] } = {
   backend: { overview: "Ejemplo", auth: { scheme: "cookie", description: "" }, endpoints: [] },
   frontend: { screens: [], navigation: [], entryScreenId: "" },
   architecture: {
-    selectedKey: "monolith",
+    selectedKey: "modular-monolith",
     justification: "Ejemplo",
     discarded: [],
     stack: { database: "PostgreSQL", backend: "Deno", frontend: "React", communication: "REST" },
@@ -83,6 +84,6 @@ export function createFakeEngine(): Engine {
       productSpec: `# ${ctx.projectName}\n\n(documento de ejemplo)\n`,
       architecture: `# Arquitectura de ${ctx.projectName}\n\n(documento de ejemplo)\n`,
     }),
-    listArchitectures: () => [],
+    listArchitectures,
   };
 }
