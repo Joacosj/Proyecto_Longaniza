@@ -94,6 +94,19 @@ Deno.test("una arquitectura con alternativas abiertas se rechaza", async () => {
   assert.match(ai.errors[0], /alternativas abiertas/);
 });
 
+Deno.test("un stack con explicaciones largas o versión 0 se rechaza", async () => {
+  const larga = structuredClone(respuesta("architecture"));
+  (larga.artifact as { stack: { backend: string } }).stack.backend = "Node.js 22 + " +
+    "x".repeat(200);
+  const cero = structuredClone(respuesta("architecture"));
+  (cero.artifact as { stack: { backend: string } }).stack.backend = "Node.js 24 + Drizzle ORM 0";
+  for (const mala of [larga, cero]) {
+    const ai = fakeAi([mala, respuesta("architecture")]);
+    await generateStage(ai.complete, { context: hasta("architecture"), stage: "architecture" });
+    assert.match(ai.errors[0], /stack\.backend/);
+  }
+});
+
 Deno.test("el formato incorrecto indica la ruta exacta", async () => {
   const mala = structuredClone(respuesta("database"));
   (mala.artifact as { entities: { name: string }[] }).entities[0].name = "Usuarios";

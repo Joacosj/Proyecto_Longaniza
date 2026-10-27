@@ -365,6 +365,22 @@ export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifac
 }
 
 // ------------------------------------------------------------------ Etapa 5: arquitectura
+const STACK_MAX = 160;
+
+/** Las capas del stack son nombres de tecnologías, no explicaciones. */
+function short(v: unknown, path: string): string {
+  const s = str(v, path);
+  if (s.length > STACK_MAX) {
+    throw new Error(
+      `${path} tiene ${s.length} caracteres: debe ser solo la lista de tecnologías con su ` +
+        `versión (máximo ${STACK_MAX}); mueve los detalles a justification, deployment o auth`,
+    );
+  }
+  if (/\b\w[\w.-]* 0(?![.\d])/.test(s)) {
+    throw new Error(`${path} tiene una versión "0" incompleta: indica la versión menor (ej. 0.36)`);
+  }
+  return s;
+}
 export function parseArchitectureArtifact(v: unknown, path: string): ArchitectureArtifact {
   const o = obj(v, path);
   const stack = obj(o.stack, `${path}.stack`);
@@ -380,10 +396,10 @@ export function parseArchitectureArtifact(v: unknown, path: string): Architectur
       return { key: str(d.key, `${p}.key`), reason: str(d.reason, `${p}.reason`) };
     }),
     stack: {
-      database: str(stack.database, `${path}.stack.database`),
-      backend: str(stack.backend, `${path}.stack.backend`),
-      frontend: str(stack.frontend, `${path}.stack.frontend`),
-      communication: str(stack.communication, `${path}.stack.communication`),
+      database: short(stack.database, `${path}.stack.database`),
+      backend: short(stack.backend, `${path}.stack.backend`),
+      frontend: short(stack.frontend, `${path}.stack.frontend`),
+      communication: short(stack.communication, `${path}.stack.communication`),
       ...(fileStorage ? { fileStorage } : {}),
     },
     deployment: {

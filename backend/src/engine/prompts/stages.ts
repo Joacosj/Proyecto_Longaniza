@@ -130,9 +130,12 @@ const ARCHITECTURE = `
 - Elige UNA arquitectura del catálogo (selectedKey = su "key"). Justifica con características
   concretas del producto, citando REQ-n, RULE-n, volumen de datos, roles e integraciones.
 - En "discarded" explica brevemente por qué no conviene cada una de las demás.
-- stack: tecnologías concretas, con versión mayor cuando aplique (ej. "PostgreSQL 16 con
-  PostGIS 3", "Node.js 22 + TypeScript + Fastify 5 + Drizzle ORM", "React 18 + Vite"). Una sola
-  opción por capa, nunca "X o Y". Si el producto guarda archivos subidos por usuarios,
+- stack: SOLO nombres de tecnologías con su versión, en una línea corta por capa (máximo ~120
+  caracteres), ej. "PostgreSQL 16 + PostGIS 3.4", "Node.js 22 + TypeScript 5 + Fastify 5 +
+  Drizzle ORM 0.36", "React 18 + Vite 5". Para librerías en versión 0.x indica la versión
+  menor (0.36), nunca "0". Una sola opción por capa, nunca "X o Y". Los detalles de uso
+  (límites, parámetros, librerías auxiliares) van en la justificación, el despliegue o la
+  autenticación, no en el stack. Si el producto guarda archivos subidos por usuarios,
   "fileStorage" dice exactamente dónde y cómo (servicio, bucket, límites); si no, omítelo.
   La base de datos y los tipos deben soportar el modelo de datos ya definido.
 - deployment: estrategia concreta, ambientes y TODAS las variables de entorno necesarias
