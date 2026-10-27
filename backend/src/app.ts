@@ -3,6 +3,7 @@ import type { AuthDeps } from "./auth/session.ts";
 import { ApiError } from "./http/errors.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { type HealthDeps, healthRoutes } from "./routes/health.ts";
+import { projectRoutes } from "./routes/projects.ts";
 
 export type AppDeps = HealthDeps & AuthDeps;
 
@@ -15,7 +16,7 @@ export function createApp(deps: AppDeps) {
 
   app.route("/health", healthRoutes(deps));
   app.route("/auth", authRoutes(deps));
-  // app.route("/projects", projectRoutes(deps));   // épica Plataforma
+  app.route("/projects", projectRoutes(deps));
   // app.route("/architectures", ...);              // épica Diseño técnico
 
   app.notFound((c) => c.json(new ApiError("NOT_FOUND", "Ruta no encontrada").toBody(), 404));
