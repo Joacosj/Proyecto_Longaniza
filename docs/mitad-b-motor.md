@@ -88,9 +88,18 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
 
 ### B5. Cliente de IA (3 pts)
 - `engine/llm.ts`: función `completeJson(system, messages, schemaDescription)` usando
-  `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`. Asumir API compatible con OpenAI
-  (`POST {base}/chat/completions`) salvo que la universidad indique otro formato.
-- Manejar error de red, timeout y respuesta no JSON con errores claros.
+  `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`.
+- El proveedor es **Microsoft Foundry** (key entregada por la universidad), con su API
+  compatible con OpenAI (ruta v1, sin `api-version`):
+  - `LLM_BASE_URL`: el endpoint del recurso terminado en `/openai/v1`, por ejemplo
+    `https://<recurso>.openai.azure.com/openai/v1`.
+  - `LLM_MODEL`: el **nombre del deployment** en Foundry (no necesariamente el nombre del modelo).
+  - Llamada: `POST {LLM_BASE_URL}/chat/completions` con header `api-key: {LLM_API_KEY}` y cuerpo
+    `{ "model": LLM_MODEL, "messages": [...], "response_format": { "type": "json_object" } }`.
+  - Se puede usar el paquete `npm:openai` con `baseURL` y `apiKey`, o `fetch` directo.
+- Manejar error de red, timeout, 429 (límite de uso: reintentar con espera), 401 (key inválida)
+  y respuesta no JSON, con errores claros.
+- Prueba de conexión: script `deno task llm:ping` que envía un mensaje corto e imprime la respuesta.
 
 ### B6. Etapa 1 con preguntas bloqueantes (8 pts)
 - `converse()` para `definition`. El prompt debe:
