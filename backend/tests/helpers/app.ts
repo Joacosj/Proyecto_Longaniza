@@ -80,3 +80,24 @@ export class TestClient {
     return (await res.json()).user as { id: string; email: string; name: string };
   }
 }
+
+/**
+ * El owner invita a `member` (por su correo) y este acepta. Deja a `member` en el proyecto
+ * con el rol indicado, usando las rutas reales de invitación.
+ */
+export async function joinProject(
+  owner: TestClient,
+  member: TestClient,
+  memberEmail: string,
+  projectId: string,
+  role: "editor" | "viewer",
+) {
+  const inv = await owner.post(`/api/projects/${projectId}/invitations`, {
+    email: memberEmail,
+    role,
+  });
+  if (inv.status !== 201) throw new Error(`invitar falló: ${inv.status} ${await inv.text()}`);
+  const { token } = await inv.json();
+  const acc = await member.post(`/api/invitations/${token}/accept`);
+  if (acc.status !== 200) throw new Error(`aceptar falló: ${acc.status} ${await acc.text()}`);
+}

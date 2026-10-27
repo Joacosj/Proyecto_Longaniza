@@ -7,6 +7,7 @@ import { readJsonObject, Validator } from "../http/body.ts";
 import { ApiError } from "../http/errors.ts";
 import { auditRepo } from "../repositories/audit.ts";
 import { projectsRepo } from "../repositories/projects.ts";
+import { registerMemberRoutes } from "./members.ts";
 
 export const MAX_NAME = 120;
 export const MAX_IDEA = 10_000;
@@ -106,6 +107,8 @@ export function projectRoutes(deps: AuthDeps) {
   r.get("/:id/audit", requireProjectRole(deps, "viewer"), async (c) => {
     return c.json({ entries: await auditRepo(deps.sql).listForProject(c.get("projectId")) });
   });
+
+  registerMemberRoutes(r, deps);
 
   return r;
 }

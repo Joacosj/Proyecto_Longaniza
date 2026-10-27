@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildApp, TestClient } from "./helpers/app.ts";
+import { buildApp, joinProject, TestClient } from "./helpers/app.ts";
 import { createTestDb } from "./helpers/db.ts";
 
 Deno.test("A2: proyectos y permisos", async (t) => {
@@ -15,11 +15,6 @@ Deno.test("A2: proyectos y permisos", async (t) => {
     const anaUser = await ana.register("ana@example.com", "Ana");
     const betoUser = await beto.register("beto@example.com", "Beto");
     const carlaUser = await carla.register("carla@example.com", "Carla");
-
-    /** Agrega un miembro directo en la base (las rutas de miembros son de A3). */
-    const addMember = (projectId: string, userId: string, role: string) =>
-      db.sql`INSERT INTO project_members (project_id, user_id, role)
-             VALUES (${projectId}, ${userId}, ${role})`;
 
     const createProject = async (client: TestClient, name: string) => {
       const res = await client.post("/api/projects", { name, initialIdea: `Idea de ${name}` });
@@ -112,7 +107,7 @@ Deno.test("A2: proyectos y permisos", async (t) => {
     });
 
     await t.step("un viewer ve el proyecto con su rol, pero no puede editarlo", async () => {
-      await addMember(anaProject.id, carlaUser.id, "viewer");
+      await joinProject(ana, carla, carlaUser.email, anaProject.id, "viewer");
 
       const res = await carla.get(`/api/projects/${anaProject.id}`);
       assert.equal(res.status, 200);
@@ -130,7 +125,7 @@ Deno.test("A2: proyectos y permisos", async (t) => {
     });
 
     await t.step("un editor tampoco puede editar ni borrar el proyecto (solo owner)", async () => {
-      await addMember(anaProject.id, betoUser.id, "editor");
+      await joinProject(ana, beto, betoUser.email, anaProject.id, "editor");
       assert.equal((await beto.get(`/api/projects/${anaProject.id}`)).status, 200);
       assert.equal((await beto.patch(`/api/projects/${anaProject.id}`, { name: "x" })).status, 403);
       assert.equal((await beto.delete(`/api/projects/${anaProject.id}`)).status, 403);
@@ -159,6 +154,10 @@ Deno.test("A2: proyectos y permisos", async (t) => {
       const { entries } = await res.json();
       assert.deepEqual(entries.map((e: { action: string }) => e.action), [
         "project.updated",
+        "member.added",
+        "invitation.created",
+        "member.added",
+        "invitation.created",
         "project.created",
       ]);
       assert.equal(entries[0].user.name, "Ana");
