@@ -48,3 +48,22 @@ export function usersRepo(sql: Sql) {
     },
   };
 }
+
+export function identitiesRepo(sql: Sql) {
+  return {
+    async findUser(provider: string, subject: string): Promise<PublicUser | undefined> {
+      const [row] = await sql<PublicUser[]>`
+        SELECT u.id, u.email, u.name
+        FROM user_identities i JOIN users u ON u.id = i.user_id
+        WHERE i.provider = ${provider} AND i.subject = ${subject}`;
+      return row;
+    },
+
+    async link(userId: string, provider: string, subject: string) {
+      await sql`
+        INSERT INTO user_identities (user_id, provider, subject)
+        VALUES (${userId}, ${provider}, ${subject})
+        ON CONFLICT (provider, subject) DO NOTHING`;
+    },
+  };
+}

@@ -1,0 +1,47 @@
+import { client } from "../api";
+import { type Project, STAGE_LABEL, type StageKind } from "../types";
+import { errorText, formatDate, Loading, Notice, useLoad } from "../ui";
+import type { AuditEntry } from "../types";
+
+/** Traduce una entrada de auditoría a una frase legible. */
+function describe(e: AuditEntry): string {
+  const d = e.detail as Record<string, unknown>;
+  const stage = STAGE_LABEL[e.entityId as StageKind] ?? e.entityId;
+  switch (e.action) {
+    case "project.created": return "creó el proyecto";
+    case "project.updated": return "editó los datos del proyecto";
+    case "invitation.created": return `invitó a ${d.email} como ${d.role}`;
+    case "member.added": return "se unió al proyecto";
+    case "member.role_changed": return `cambió el rol de ${d.name} a ${d.to}`;
+    case "member.removed": return `quitó a ${d.name} del proyecto`;
+    case "stage.updated": return `editó ${stage} (versión ${d.version})`;
+    case "stage.generated": return `generó ${stage} con la IA (versión ${d.version})`;
+    case "stage.approved": return `aprobó ${stage}`;
+    case "question.answered": return "respondió una pregunta";
+    case "question.deferred": return "pospuso una pregunta";
+    case "question.reopened": return "reabrió una pregunta";
+    case "consistency.checked": return "revisó la consistencia entre etapas";
+    case "inconsistency.resolved": return "marcó una inconsistencia como resuelta";
+    case "documents.generated": return `generó los documentos (versión ${d.version})`;
+    default: return e.action;
+  }
+}
+
+export function ActivityTab({ project }: { project: Project }) {
+  const { data, error } = useLoad(() => client.projects.audit(project.id), [project.id]);
+  if (error) return <Notice>{errorText(error)}</Notice>;
+  if (!data) return <Loading />;
+  return (
+    <section>
+      <h2>Actividad</h2>
+      <ol className="activity">
+        {data.entries.map((e) => (
+          <li key={e.id}>
+            <span className="muted">{formatDate(e.createdAt)}</span>{" "}
+            <strong>{e.user?.name ?? "Alguien"}</strong> {describe(e)}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}

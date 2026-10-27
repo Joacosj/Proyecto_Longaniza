@@ -42,8 +42,19 @@ Deno.test("A3: miembros e invitaciones", async (t) => {
       assert.equal(accept.status, 200);
       assert.deepEqual(await accept.json(), { projectId, role: "editor" });
 
+      // Aceptarla de nuevo (doble clic, enlace reabierto) es idempotente para su destinatario...
       const again = await beto.post(`/api/invitations/${body.token}/accept`);
-      assert.equal(again.status, 409);
+      assert.equal(again.status, 200);
+      assert.deepEqual(await again.json(), { projectId, role: "editor" });
+      assert.equal(
+        (await db.sql`SELECT count(*)::int AS n FROM project_members
+                      WHERE project_id = ${projectId} AND user_id = ${
+          (await (await beto.get("/api/auth/me")).json()).user.id
+        }`)[0].n,
+        1,
+      );
+      // ...pero otra persona no puede reutilizarla.
+      assert.equal((await dani.post(`/api/invitations/${body.token}/accept`)).status, 409);
     });
 
     await t.step("aceptar exige sesión (401) y un token válido (404)", async () => {
