@@ -6,7 +6,9 @@ import { readJsonObject, Validator } from "../http/body.ts";
 import { ApiError } from "../http/errors.ts";
 import { auditRepo } from "../repositories/audit.ts";
 import { projectsRepo } from "../repositories/projects.ts";
+import { registerDialogRoutes } from "./dialog.ts";
 import { registerMemberRoutes } from "./members.ts";
+import { registerReviewRoutes } from "./review.ts";
 import { registerStageRoutes, type StageDeps } from "./stages.ts";
 
 export const MAX_NAME = 120;
@@ -110,6 +112,8 @@ export function projectRoutes(deps: StageDeps) {
 
   registerMemberRoutes(r, deps);
   registerStageRoutes(r, deps);
+  registerDialogRoutes(r, deps);
+  registerReviewRoutes(r, deps);
 
   return r;
 }

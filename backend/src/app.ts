@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { AuthDeps } from "./auth/session.ts";
 import type { Engine } from "./engine/types.ts";
 import { ApiError } from "./http/errors.ts";
+import { architectureRoutes } from "./routes/architectures.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { type HealthDeps, healthRoutes } from "./routes/health.ts";
 import { invitationRoutes } from "./routes/members.ts";
@@ -23,7 +24,7 @@ export function createApp(deps: AppDeps) {
   app.route("/auth", authRoutes(deps));
   app.route("/projects", projectRoutes(deps));
   app.route("/invitations", invitationRoutes(deps));
-  // app.route("/architectures", ...);              // épica Diseño técnico
+  app.route("/architectures", architectureRoutes(deps));
 
   app.notFound((c) => c.json(new ApiError("NOT_FOUND", "Ruta no encontrada").toBody(), 404));
 

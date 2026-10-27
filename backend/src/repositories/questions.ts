@@ -54,6 +54,27 @@ export function questionsRepo(sql: Sql) {
       return this.list(projectId, { stage, status: "open", blocking: true });
     },
 
+    async find(projectId: string, id: string): Promise<Question | undefined> {
+      const [row] = await sql<Row[]>`
+        ${SELECT(sql)} WHERE q.project_id = ${projectId} AND q.id = ${id}`;
+      return row ? toQuestion(row) : undefined;
+    },
+
+    async answer(id: string, answer: string, userId: string) {
+      await sql`
+        UPDATE questions SET status = 'answered', answer = ${answer}, answered_by = ${userId},
+                             answered_at = now()
+        WHERE id = ${id}`;
+    },
+
+    /** Pospone (deferred) o reabre (open) una pregunta, borrando la respuesta previa. */
+    async setStatus(id: string, status: "open" | "deferred") {
+      await sql`
+        UPDATE questions SET status = ${status}, answer = NULL, answered_by = NULL,
+                             answered_at = NULL
+        WHERE id = ${id}`;
+    },
+
     async insertMany(projectId: string, stage: StageKind, items: NewQuestion[]) {
       if (items.length === 0) return [];
       const rows = items.map((q) => ({
