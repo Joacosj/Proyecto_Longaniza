@@ -405,27 +405,17 @@ function architectureDoc(
     "",
   );
 
-  if (tpl) {
-    out.push(
-      "## 3. Organización de la solución",
-      "",
-      `- **Backend:** ${tpl.backend}`,
-      `- **Frontend:** ${tpl.frontend}`,
-      `- **Persistencia:** ${tpl.persistence}`,
-      `- **Comunicación:** ${tpl.communication}`,
-      `- **Infraestructura:** ${tpl.infrastructure}`,
-      "",
-    );
-  }
-
+  // Las secciones del catálogo (backend, persistencia, infraestructura, operación) describen
+  // opciones genéricas ("React, Vue o similar"). No se copian aquí: contradecirían las
+  // decisiones concretas de este proyecto. Solo se usa el resumen de la sección 1.
   out.push(
-    "## 4. Base de datos",
+    "## 3. Base de datos",
     "",
     `Motor: ${ar.stack.database}. Tablas: ${db.entities.map((e) => `\`${e.name}\``).join(", ")}. ` +
       "Las columnas, claves, índices y restricciones están en la sección 10 de la especificación " +
       "de producto y deben crearse mediante migraciones versionadas.",
     "",
-    "## 5. Autenticación y autorización",
+    "## 4. Autenticación y autorización",
     "",
     `- **Identidad:** ${ar.auth.identity}`,
     `- **SSO:** ${ar.auth.sso}`,
@@ -436,7 +426,7 @@ function architectureDoc(
     "La autorización se valida siempre en el backend. Sin identidad válida: 401. Con identidad " +
       "pero sin permiso sobre el recurso: 403.",
     "",
-    "## 6. Despliegue",
+    "## 5. Despliegue",
     "",
     ar.deployment.strategy,
     "",
@@ -452,7 +442,7 @@ function architectureDoc(
     );
   }
   out.push(
-    "## 7. Observabilidad",
+    "## 6. Observabilidad",
     "",
     table(["Aspecto", "Decisión"], [
       ["Logs", ar.observability.logging],
@@ -462,7 +452,6 @@ function architectureDoc(
     ]),
     "",
   );
-  if (tpl) out.push("## 8. Operación", "", tpl.operation, "");
 
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 }

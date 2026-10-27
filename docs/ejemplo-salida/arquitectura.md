@@ -26,19 +26,11 @@
 | Frontend | React 18 + Vite + TypeScript |
 | Comunicación | REST con JSON |
 
-## 3. Organización de la solución
-
-- **Backend:** Un proceso con capas (rutas, servicios, repositorios) y módulos por dominio que se comunican mediante interfaces internas, nunca accediendo directo a tablas de otro módulo.
-- **Frontend:** Aplicación SPA (React, Vue o similar) servida como estáticos, o renderizada por el mismo backend.
-- **Persistencia:** PostgreSQL con migraciones versionadas (Prisma, Drizzle o Alembic según el lenguaje del backend). Una sola base de datos con esquemas o prefijos por módulo.
-- **Comunicación:** Llamadas internas en el mismo proceso entre módulos; REST o GraphQL hacia el frontend.
-- **Infraestructura:** Imagen Docker optimizada con multi-stage build. Docker Compose en desarrollo; contenedores administrados (Azure Container Apps, Oracle Cloud o similar) en staging y producción, detrás de NGINX o del balanceador del proveedor.
-
-## 4. Base de datos
+## 3. Base de datos
 
 Motor: PostgreSQL 16 con la extensión btree_gist. Tablas: `users`, `rooms`, `reservations`. Las columnas, claves, índices y restricciones están en la sección 10 de la especificación de producto y deben crearse mediante migraciones versionadas.
 
-## 5. Autenticación y autorización
+## 4. Autenticación y autorización
 
 - **Identidad:** Microsoft Entra ID de la universidad.
 - **SSO:** OpenID Connect, flujo authorization code con PKCE.
@@ -48,7 +40,7 @@ Motor: PostgreSQL 16 con la extensión btree_gist. Tablas: `users`, `rooms`, `re
 
 La autorización se valida siempre en el backend. Sin identidad válida: 401. Con identidad pero sin permiso sobre el recurso: 403.
 
-## 6. Despliegue
+## 5. Despliegue
 
 Una imagen Docker multi-stage para el backend que también sirve el frontend compilado; PostgreSQL gestionado. Docker Compose en desarrollo.
 
@@ -64,7 +56,7 @@ Una imagen Docker multi-stage para el backend que también sirve el frontend com
 | `ENTRA_CLIENT_SECRET` | Secreto de esa aplicación |
 | `ENTRA_TENANT_ID` | Tenant de la universidad |
 
-## 7. Observabilidad
+## 6. Observabilidad
 
 | Aspecto | Decisión |
 |---|---|
@@ -72,7 +64,3 @@ Una imagen Docker multi-stage para el backend que también sirve el frontend com
 | Métricas | Contador de reservas creadas y canceladas; latencia y errores por ruta. |
 | Trazabilidad | Id de solicitud propagado en el header X-Request-Id. |
 | Verificación de estado | GET /api/health (proceso) y GET /api/health/db (base de datos). |
-
-## 8. Operación
-
-Variables de entorno por ambiente (dev, staging, prod) y secretos en un gestor (Azure Key Vault). Logs estructurados en JSON, endpoint /health, métricas básicas de latencia y errores por ruta.

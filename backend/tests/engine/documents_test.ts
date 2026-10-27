@@ -63,7 +63,7 @@ Deno.test("el documento de arquitectura incluye la elección, el stack, la auten
   }
   assert.ok(architecture.includes(ar.auth.sso));
   assert.match(architecture, /### Alternativas descartadas/);
-  assert.match(architecture, /## 7\. Observabilidad/);
+  assert.match(architecture, /## 6\. Observabilidad/);
 });
 
 Deno.test("los diagramas Mermaid incluyen entidades, relaciones y navegación", () => {
@@ -108,4 +108,10 @@ Deno.test("el diagrama ER usa tipos simples y no hay formato de error fijo que c
   assert.match(productSpec, /    timestamptz_array fallos/);
   assert.doesNotMatch(productSpec, /Formato de error para cualquier respuesta/);
   assert.doesNotMatch(productSpec, /Cuerpo \(JSON\)/);
+});
+
+Deno.test("el documento de arquitectura no copia las opciones genéricas del catálogo", () => {
+  const { architecture } = renderDocuments(ejemplo());
+  assert.doesNotMatch(architecture, /o similar|Prisma, Drizzle o Alembic|REST o GraphQL/);
+  assert.doesNotMatch(architecture, /Organización de la solución|## \d\. Operación/);
 });
