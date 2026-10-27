@@ -87,10 +87,12 @@ async function turn(message: string) {
       const why = r.newQuestions.filter((q) => q.isBlocking);
       if (why.length) {
         console.log("\nPor qué son bloqueantes:");
-        why.forEach((q) =>
-          console.log(`  - ${q.text}: ${q.rationale} (afecta: ${q.affects.join(", ")})`)
-        );
+        why.forEach((q) => {
+          const n = ctx.openQuestions.findIndex((o) => o.text === q.text) + 1;
+          console.log(`  ${n}. ${q.rationale} (afecta: ${q.affects.join(", ")})`);
+        });
       }
+      console.log("\nResponde con: r <número> <respuesta>");
     }
 
     if (r.artifactDraft) {
