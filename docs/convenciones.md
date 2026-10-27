@@ -7,13 +7,13 @@ Basadas en las reglas del curso (clase 2).
 - Una rama por épica. Nadie hace commits directos en `main`.
 - Los cambios entran a `main` por pull request, revisado por otro integrante.
 
-| Épica | Rama | Responsable |
-|---|---|---|
-| General (base, Docker, docs, CI) | `epic/general` | Todos |
-| Plataforma y colaboración | `epic/plataforma` | Persona A |
-| Definición del producto y modelo de datos | `epic/definicion-datos` | Persona B |
-| Diseño técnico (API, frontend, arquitectura) | `epic/diseno-tecnico` | Persona C |
-| Revisión y documentos finales | `epic/revision-documentos` | Persona C, con apoyo de A y B |
+| Épica | Rama | Mitad | Tareas |
+|---|---|---|---|
+| General (base, Docker, docs) | `epic/general` | Ambas | — |
+| Plataforma y colaboración | `epic/plataforma` | A | A1 a A9 |
+| Definición y preguntas bloqueantes | `epic/definicion` | B | B5, B6, B8 |
+| Diseño técnico (datos, API, frontend, arquitectura) | `epic/diseno-tecnico` | B | B4, B7 |
+| Revisión y documentos finales | `epic/revision-documentos` | B | B1, B2, B3, B9 |
 
 ## Commits
 
@@ -32,18 +32,17 @@ feat: IDE-12 agrega login con usuario y contraseña
 
 ## Reparto de trabajo
 
-### Persona A: plataforma
-Autenticación (usuario y contraseña, SSO), sesiones, proyectos, miembros e invitaciones,
-permisos validados en backend, trazabilidad (`audit_log`), control de concurrencia
-(versión en `stages`, respuesta 409), pantalla de revisión consolidada, pruebas funcionales.
+El proyecto se divide en dos mitades independientes, unidas por la interfaz `Engine`
+(`backend/src/engine/types.ts`):
 
-### Persona B: definición y datos
-Diálogo de la etapa 1, detección de preguntas bloqueantes, propuesta y edición colaborativa del
-modelo de datos con diagrama ER, validador de consistencia entre etapas.
+- **Mitad A, plataforma:** usuarios, permisos, base de datos, rutas HTTP y aplicación web.
+  Instrucciones completas en `docs/mitad-a-plataforma.md` (40 pts).
+- **Mitad B, motor:** IA, preguntas bloqueantes, generación de etapas, validación de
+  consistencia y documentos Markdown. Instrucciones completas en `docs/mitad-b-motor.md` (43 pts).
 
-### Persona C: diseño técnico y salida
-Etapas de backend/API, frontend (mockups y mapa de pantallas) y arquitectura (catálogo de las
-cinco arquitecturas), generación de los dos documentos Markdown.
+La mitad A trabaja con `createFakeEngine()` hasta que la mitad B entregue el motor real, así
+ninguna espera a la otra. Cada archivo de instrucciones está pensado para entregárselo completo
+a un asistente de IA.
 
 ## Reglas de código
 
