@@ -95,15 +95,18 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
   objeto parseado y debe lanzar un Error con un mensaje claro si no cumple el formato; ese
   mensaje se le pasa a la IA para que corrija su respuesta una vez.
 
-### B6. Etapa 1 con preguntas bloqueantes (8 pts)
-- `converse()` para `definition`. El prompt debe:
-  - Cubrir problema, contexto, usuarios y roles, resultados esperados, MVP dentro y fuera,
-    recorrido principal, requisitos, reglas, integraciones, seguridad y casos borde.
-  - Marcar como bloqueante solo lo que cambia el modelo de datos, el backend, la interfaz o la
-    arquitectura (ej. si hay distintos roles, si algo es anónimo, si hay pagos). Lo demás va como
-    pregunta no bloqueante.
-  - No inventar respuestas ni repetir preguntas ya respondidas.
-  - Devolver `artifactDraft` cuando haya información suficiente.
+### B6. Etapa 1 con preguntas bloqueantes (8 pts) — hecho, falta afinar con casos reales
+- `engine/definition.ts` (`converseDefinition`) y las instrucciones en `engine/prompts/definition.ts`.
+- La IA cubre problema, usuarios, resultados, MVP, recorrido, requisitos, reglas,
+  integraciones, seguridad y casos borde, con máximo 4 preguntas por turno.
+- Reglas que aplica el código, no la IA:
+  - Respuesta validada (`engine/validate.ts`); si falla, se le pide corregir con la ruta exacta.
+  - Un borrador con contradicciones internas se rechaza y se pide corregirlo.
+  - Se descartan preguntas repetidas (ignorando tildes y mayúsculas).
+  - Bloqueantes primero; una bloqueante debe indicar qué etapas afecta.
+  - Si queda alguna bloqueante abierta, no se entrega borrador.
+- Probar con la IA real: `deno task conversar` (desde `backend/`).
+- Pendiente: probar varias ideas reales y ajustar el prompt según lo que pregunte de más o de menos.
 
 ### B7. Generación de las etapas siguientes (8 pts)
 - `generate()` para `database`, `backend`, `frontend` y `architecture`, siempre usando las
