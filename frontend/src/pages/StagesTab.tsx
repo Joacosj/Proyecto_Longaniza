@@ -108,6 +108,8 @@ function StageView(
   );
   const [lostDraft, setLostDraft] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  /** Ver o editar el artefacto como JSON aunque la etapa tenga su componente propio. */
+  const [rawJson, setRawJson] = useState(false);
 
   const stage = loaded.data?.stage;
   useEffect(() => {
@@ -196,7 +198,8 @@ function StageView(
     }
   }
 
-  const Custom = stageComponent(kind);
+  const Custom = rawJson ? undefined : stageComponent(kind);
+  const hasCustom = !!stageComponent(kind);
 
   return (
     <section className="stage-main" aria-labelledby="stage-title">
@@ -269,7 +272,12 @@ function StageView(
         </details>
       )}
 
-      <div className="history-toggle">
+      <div className="history-toggle row">
+        {hasCustom && !(isEmpty && !dirty) && (
+          <button type="button" className="link" onClick={() => setRawJson((v) => !v)} aria-pressed={rawJson}>
+            {rawJson ? "Volver a la vista normal" : canEdit ? "Editar como JSON" : "Ver como JSON"}
+          </button>
+        )}
         <button type="button" className="link" onClick={() => setShowHistory((v) => !v)} aria-expanded={showHistory}>
           {showHistory ? "Ocultar historial" : "Ver historial de versiones"}
         </button>
