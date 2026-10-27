@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-env --allow-read src/main.ts",
+    "start": "deno run --allow-net --allow-env --allow-read src/main.ts",
+    "migrate": "deno run --allow-net --allow-env --allow-read src/db/migrate.ts",
+    "test": "deno test --allow-net --allow-env --allow-read",
+    "check": "deno check src/main.ts src/db/migrate.ts && deno lint && deno fmt --check"
+  },
+  "imports": {
+    "hono": "npm:hono@^4.6.0",
+    "postgres": "npm:postgres@^3.4.5"
+  },
+  "fmt": { "lineWidth": 100 }
+}
