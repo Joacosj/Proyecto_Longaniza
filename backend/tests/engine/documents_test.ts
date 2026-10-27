@@ -92,3 +92,20 @@ Deno.test("falla con un mensaje claro si falta una etapa", () => {
 Deno.test("table escapa barras verticales y saltos de línea", () => {
   assert.equal(table(["a"], [["x | y\nz"]]), "| a |\n|---|\n| x \\| y z |");
 });
+
+Deno.test("el diagrama ER usa tipos simples y no hay formato de error fijo que contradiga la API", () => {
+  const ctx = ejemplo();
+  ctx.stages.database!.entities[0].attributes[1].type = "varchar(254)";
+  ctx.stages.database!.entities[0].attributes.push({
+    name: "fallos",
+    type: "timestamptz[]",
+    nullable: false,
+    primaryKey: false,
+    unique: false,
+  });
+  const { productSpec } = renderDocuments(ctx);
+  assert.match(productSpec, /    varchar email UK/);
+  assert.match(productSpec, /    timestamptz_array fallos/);
+  assert.doesNotMatch(productSpec, /Formato de error para cualquier respuesta/);
+  assert.doesNotMatch(productSpec, /Cuerpo \(JSON\)/);
+});

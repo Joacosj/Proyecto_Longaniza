@@ -15,6 +15,10 @@ otra IA implementará SIN poder hacer preguntas. Recibes las etapas ya definidas
 JSON y debes producir la siguiente etapa.
 
 Reglas generales:
+- Prefiere SIEMPRE la solución más simple que cumpla los requisitos. Esto es un MVP que otra IA
+  implementará de una vez: cada mecanismo extra es una oportunidad de error. No agregues
+  complejidad que nadie pidió (idempotencia, hashes canónicos, triggers con lógica, colas,
+  cachés) salvo que un requisito o regla la exija explícitamente.
 - Las etapas anteriores son la única fuente de verdad. Respeta sus decisiones y usa sus ids
   exactos (ROLE-n, FEAT-n, REQ-n, RULE-n, nombres de tablas, EP-n, SCR-n).
 - No agregues funcionalidades fuera del MVP ni omitas ninguna que esté dentro.
@@ -48,6 +52,12 @@ const DATABASE = `
 - Si hay cuentas de usuario, incluye cómo se guardan las credenciales (hash, nunca la
   contraseña) y el rol. Si un requisito pide historial o trazabilidad, modela esa tabla.
 - Fechas en timestamptz (UTC). created_at y updated_at donde corresponda.
+- Los ids de la especificación (ROLE-1, FEAT-2…) son referencias del documento, NO valores a
+  guardar: roles, estados y categorías se guardan con códigos legibles en minúsculas
+  ("vecino", "en_gestion"), indicando su equivalencia en la descripción.
+- La lógica de negocio (permisos, transiciones, validaciones con contexto) va en el backend.
+  En la base usa solo restricciones declarativas simples: NOT NULL, UNIQUE, FK, CHECK. No uses
+  triggers ni funciones salvo que sea imprescindible.
 
 Forma de "artifact":
 {
@@ -80,6 +90,8 @@ const BACKEND = `
 - Cada parámetro de ruta (":id") se describe en pathParams. Las validaciones citan las
   reglas de negocio (RULE-n) que aplican.
 - Lo público nunca devuelve datos privados que la definición protege.
+- Describe en "overview" el formato único de error (ej. { "error": { "code", "message" } }) y
+  úsalo igual en todos los endpoints.
 - Paginación por parámetros de consulta en los listados.
 
 Forma de "artifact":
@@ -108,8 +120,11 @@ const FRONTEND = `
 - actions: cada acción llama a un endpoint existente (endpointId = EP-n), navega a una
   pantalla (navigatesTo = SCR-n) o ambas. Si solo algunos roles la ven, indica
   visibleToRoleIds, y esos roles deben estar permitidos por el endpoint.
-- states: qué se muestra vacío, cargando y con error (texto concreto).
-- navigation: todas las transiciones entre pantallas. entryScreenId: la pantalla inicial.
+- states: qué se muestra vacío, cargando y con error (texto concreto y breve).
+- navigation: las transiciones principales entre pantallas, una por par de pantallas, con un
+  "trigger" corto (máximo 6 palabras, ej. "Pulsa Crear reporte"). No describas aquí casos de
+  error ni retornos genéricos (como volver al inicio al cerrar sesión): eso va en la pantalla.
+  entryScreenId: la pantalla inicial.
 - No agregues pantallas para funcionalidades fuera del MVP. Usa todos los endpoints.
 
 Forma de "artifact":

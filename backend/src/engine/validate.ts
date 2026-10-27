@@ -355,11 +355,13 @@ export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifac
     }, { min: 1 }),
     navigation: arr(o.navigation ?? [], `${path}.navigation`, (x, p) => {
       const n = obj(x, p);
-      return {
-        from: id(n.from, `${p}.from`, "SCR"),
-        to: id(n.to, `${p}.to`, "SCR"),
-        trigger: str(n.trigger, `${p}.trigger`),
-      };
+      const trigger = str(n.trigger, `${p}.trigger`);
+      if (trigger.length > 60) {
+        throw new Error(
+          `${p}.trigger debe ser breve (máximo 60 caracteres, recibido ${trigger.length})`,
+        );
+      }
+      return { from: id(n.from, `${p}.from`, "SCR"), to: id(n.to, `${p}.to`, "SCR"), trigger };
     }),
   };
 }

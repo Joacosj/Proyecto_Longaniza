@@ -3,6 +3,7 @@ import type { JsonCompleter } from "../../src/engine/definition.ts";
 import { ejemplo } from "../../src/engine/ejemplo.ts";
 import { createEngine } from "../../src/engine/engine.ts";
 import { generateStage } from "../../src/engine/generate.ts";
+import { stageSystemPrompt } from "../../src/engine/prompts/stages.ts";
 import { ApiError } from "../../src/http/errors.ts";
 import type { ProjectContext } from "../../src/engine/types.ts";
 
@@ -163,4 +164,18 @@ Deno.test("un error de la IA llega como mensaje claro", async () => {
     engine.generate({ context: hasta("database"), stage: "database" }),
     (e) => e instanceof ApiError && /tardó demasiado/.test(e.message),
   );
+});
+
+Deno.test("un mapa de navegación con triggers largos se rechaza", async () => {
+  const mala = structuredClone(respuesta("frontend"));
+  (mala.artifact as { navigation: { trigger: string }[] }).navigation[0].trigger = "x".repeat(80);
+  const ai = fakeAi([mala, respuesta("frontend")]);
+  await generateStage(ai.complete, { context: hasta("frontend"), stage: "frontend" });
+  assert.match(ai.errors[0], /navigation\[0\]\.trigger debe ser breve/);
+});
+
+Deno.test("las instrucciones piden simplicidad y códigos legibles", () => {
+  const p = stageSystemPrompt("database");
+  assert.match(p, /solución más simple/);
+  assert.match(p, /códigos legibles/);
 });

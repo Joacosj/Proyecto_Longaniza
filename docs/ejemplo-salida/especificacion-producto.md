@@ -195,8 +195,6 @@ API REST JSON bajo el prefijo /api.
 
 **Autenticación:** Cookie de sesión HttpOnly. Tras el SSO, el backend crea una sesión y envía la cookie 'sid'. Sin cookie válida: 401. Con cookie pero sin el rol requerido: 403.
 
-Formato de error para cualquier respuesta 4xx o 5xx: `{ "error": { "code": string, "message": string } }`.
-
 | Id | Método | Ruta | Descripción | Roles |
 |---|---|---|---|---|
 | EP-1 | GET | `/rooms` | Lista salas activas con sus bloques ocupados en una fecha. | cualquier usuario con sesión |
@@ -239,7 +237,7 @@ Crea una reserva.
 - **Tablas:** `reservations`, `rooms`
 - **Requisitos:** REQ-2
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|
@@ -309,7 +307,7 @@ Crea una sala.
 - **Tablas:** `rooms`
 - **Requisitos:** REQ-5
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|
@@ -342,7 +340,7 @@ Edita una sala o la activa/desactiva.
 |---|---|---|---|---|
 | `id` | uuid | sí |  |  |
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|

@@ -231,9 +231,6 @@ function productSpec(
     "",
     `**Autenticación:** ${be.auth.scheme}. ${be.auth.description}`,
     "",
-    "Formato de error para cualquier respuesta 4xx o 5xx: " +
-      '`{ "error": { "code": string, "message": string } }`.',
-    "",
     table(
       ["Id", "Método", "Ruta", "Descripción", "Roles"],
       be.endpoints.map((e) => [e.id, e.method, `\`${e.path}\``, e.summary, endpointRoles(ctx, e)]),
@@ -256,7 +253,7 @@ function productSpec(
       ["Parámetros de ruta", e.request.pathParams],
       ["Parámetros de consulta", e.request.queryParams],
       ["Cabeceras", e.request.headers],
-      ["Cuerpo (JSON)", e.request.body],
+      ["Cuerpo", e.request.body],
     ];
     for (const [title, fields] of sections) {
       if (fields.length) out.push(`**${title}:**`, "", fieldsTable(fields), "");
@@ -482,7 +479,7 @@ function erDiagram(db: DatabaseArtifact): string {
         fkCols.has(`${e.name}.${a.name}`) && "FK",
         a.unique && !a.primaryKey && "UK",
       ].filter(Boolean).join(",");
-      lines.push(`    ${mermaidId(a.type)} ${mermaidId(a.name)}${keys ? " " + keys : ""}`);
+      lines.push(`    ${erType(a.type)} ${mermaidId(a.name)}${keys ? " " + keys : ""}`);
     }
     lines.push("  }");
   }
@@ -566,6 +563,12 @@ export function table(headers: string[], rows: string[][]): string {
 
 function bullets(items: string[], empty = "_Ninguno._"): string {
   return items.length ? items.map((i) => `- ${i}`).join("\n") : empty;
+}
+
+/** Tipo legible para Mermaid: "varchar(100)" → "varchar", "timestamptz[]" → "timestamptz_array". */
+function erType(type: string): string {
+  const base = type.trim().replace(/\(.*\)/, "").replace(/\[\]$/, "_array");
+  return mermaidId(base).replace(/_+/g, "_").replace(/^_|_$/g, "") || "text";
 }
 
 function mermaidId(s: string): string {
