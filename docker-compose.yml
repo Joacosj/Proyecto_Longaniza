@@ -21,6 +21,12 @@ services:
       APP_ENV: development
       PORT: 8000
       DATABASE_URL: postgres://${POSTGRES_USER:-ideator}:${POSTGRES_PASSWORD:-ideator}@db:5432/${POSTGRES_DB:-ideator}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-secret-change-me}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     depends_on:
       db:
         condition: service_healthy
