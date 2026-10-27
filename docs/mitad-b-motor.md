@@ -86,11 +86,23 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
   4. `realtime`: GraphQL con suscripciones por WebSockets para colaboración en vivo.
   5. `ai-agents` (propuesta del grupo): Vertex AI y Google Agent Development Kit.
 
-### B5. Cliente de IA (3 pts)
+### B5. Cliente de IA (3 pts) — hecho
 - `engine/llm.ts`: función `completeJson(system, messages, schemaDescription)` usando
-  `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`. Asumir API compatible con OpenAI
-  (`POST {base}/chat/completions`) salvo que la universidad indique otro formato.
-- Manejar error de red, timeout y respuesta no JSON con errores claros.
+  `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`.
+- El proveedor es **Microsoft Foundry** (key entregada por la universidad), con su API
+  compatible con OpenAI (ruta v1, sin `api-version`):
+  - `LLM_BASE_URL`: el endpoint del recurso terminado en `/openai/v1`, por ejemplo
+    `https://<recurso>.openai.azure.com/openai/v1`.
+  - `LLM_MODEL`: el **nombre del deployment** en Foundry (no necesariamente el nombre del modelo).
+  - Llamada: `POST {LLM_BASE_URL}/chat/completions` con header `api-key: {LLM_API_KEY}` y cuerpo
+    `{ "model": LLM_MODEL, "messages": [...], "response_format": { "type": "json_object" } }`.
+  - Se puede usar el paquete `npm:openai` con `baseURL` y `apiKey`, o `fetch` directo.
+- Manejar error de red, timeout, 429 (límite de uso: reintentar con espera), 401 (key inválida)
+  y respuesta no JSON, con errores claros.
+- Prueba de conexión: `deno task llm:ping` (desde `backend/`, lee el `.env` de la raíz).
+- Uso: `completeJson(loadLlmConfig(), { system, messages, validate })`. `validate` recibe el
+  objeto parseado y debe lanzar un Error con un mensaje claro si no cumple el formato; ese
+  mensaje se le pasa a la IA para que corrija su respuesta una vez.
 
 ### B6. Etapa 1 con preguntas bloqueantes (8 pts)
 - `converse()` para `definition`. El prompt debe:
