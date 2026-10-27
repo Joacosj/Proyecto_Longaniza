@@ -1,8 +1,12 @@
 import { Hono } from "hono";
+import type { AuthDeps } from "./auth/session.ts";
 import { ApiError } from "./http/errors.ts";
+import { authRoutes } from "./routes/auth.ts";
 import { type HealthDeps, healthRoutes } from "./routes/health.ts";
+import { invitationRoutes } from "./routes/members.ts";
+import { projectRoutes } from "./routes/projects.ts";
 
-export type AppDeps = HealthDeps;
+export type AppDeps = HealthDeps & AuthDeps;
 
 /**
  * Construye la app sin abrir conexiones, para poder probarla con dependencias falsas.
@@ -12,8 +16,9 @@ export function createApp(deps: AppDeps) {
   const app = new Hono().basePath("/api");
 
   app.route("/health", healthRoutes(deps));
-  // app.route("/auth", authRoutes(deps));          // épica Plataforma
-  // app.route("/projects", projectRoutes(deps));   // épica Plataforma
+  app.route("/auth", authRoutes(deps));
+  app.route("/projects", projectRoutes(deps));
+  app.route("/invitations", invitationRoutes(deps));
   // app.route("/architectures", ...);              // épica Diseño técnico
 
   app.notFound((c) => c.json(new ApiError("NOT_FOUND", "Ruta no encontrada").toBody(), 404));
