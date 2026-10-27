@@ -168,7 +168,14 @@ export interface ArchitectureArtifact {
   /** Por qué esta arquitectura calza con este producto, citando decisiones previas. */
   justification: string;
   discarded: { key: string; reason: string }[];
-  stack: { database: string; backend: string; frontend: string; communication: string };
+  stack: {
+    database: string;
+    backend: string;
+    frontend: string;
+    communication: string;
+    /** Dónde se guardan archivos subidos por usuarios (fotos, adjuntos). Omitir si no hay. */
+    fileStorage?: string;
+  };
   deployment: {
     strategy: string;
     environments: string[];

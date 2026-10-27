@@ -108,11 +108,19 @@ frontend/src/stages/DefinitionStage.tsx, DatabaseStage.tsx   (crear)
 - Probar con la IA real: `deno task conversar` (desde `backend/`).
 - Pendiente: probar varias ideas reales y ajustar el prompt según lo que pregunte de más o de menos.
 
-### B7. Generación de las etapas siguientes (8 pts)
-- `generate()` para `database`, `backend`, `frontend` y `architecture`, siempre usando las
-  etapas anteriores como contexto y referenciando sus ids.
-- Después de generar, correr `checkConsistency` y, si hay inconsistencias, reintentar una vez
-  pasándoselas a la IA.
+### B7. Generación de las etapas siguientes (8 pts) — hecho, falta afinar con casos reales
+- `engine/generate.ts` (`generateStage`) con las instrucciones de cada etapa en
+  `engine/prompts/stages.ts`: base de datos, backend/API, pantallas y arquitectura.
+- Cada etapa recibe las anteriores y las decisiones confirmadas; la arquitectura recibe además
+  el catálogo de las cinco arquitecturas.
+- El código valida el formato de cada etapa (`validate.ts`) y rechaza la propuesta si
+  contradice las etapas anteriores (tabla o endpoint inexistente, 401/403 faltantes, rol no
+  permitido, tecnología con alternativas abiertas…); le devuelve el error a la IA una vez.
+- La arquitectura tiene un campo opcional `stack.fileStorage` para dónde se guardan archivos.
+- En la web, "Generar con IA" en la definición entrega el borrador solo si no quedan
+  bloqueantes (si quedan, responde 409 con las preguntas).
+- Probar con la IA real: `deno task generar` (desde `backend/`), después de `deno task
+  conversar`. Deja cada etapa y los dos Markdown en `backend/salida/`; si se corta, retoma.
 
 ### B8. Componentes de definición y base de datos (5 pts)
 - `frontend/src/stages/DefinitionStage.tsx`: chat con la IA y lista de preguntas, con las

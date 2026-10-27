@@ -253,6 +253,6 @@ Deno.test("el motor real usa la conversación en definición y orienta en las de
     history: [],
     userMessage: "x",
   });
-  assert.match(db.reply, /Generar propuesta/);
+  assert.match(db.reply, /Generar con IA/);
   assert.equal(ai.calls.length, 1);
 });

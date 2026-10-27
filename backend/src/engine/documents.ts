@@ -403,6 +403,7 @@ function architectureDoc(
       ["Backend", ar.stack.backend],
       ["Frontend", ar.stack.frontend],
       ["Comunicación", ar.stack.communication],
+      ...(ar.stack.fileStorage ? [["Archivos subidos", ar.stack.fileStorage]] : []),
     ]),
     "",
   );
