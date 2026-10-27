@@ -113,6 +113,9 @@ const FRONTEND = `
 ## Etapa: interfaz (pantallas y navegación)
 - Pantallas necesarias para que cada rol complete el recorrido principal y para cubrir cada
   funcionalidad del MVP (cada FEAT-n debe estar en al menos una pantalla). Ids SCR-1, SCR-2…
+- route: ruta del navegador de cada pantalla, única (ej. "/app/reportes/:id"). Si la pantalla
+  recibe un id, va como parámetro de la ruta. Las rutas de pantallas no pueden coincidir con
+  rutas de la API; usa un prefijo propio (como /app) si comparten dominio.
 - visibleToRoleIds: ROLE-n que ven la pantalla; vacío significa pantalla pública (sin sesión).
 - layout: bloques en orden para un mockup de baja fidelidad. region ∈ header, sidebar, main,
   footer, modal; component ∈ title, text, form, table, list, card, button, nav. En "fields"
@@ -131,7 +134,7 @@ Forma de "artifact":
 {
   "entryScreenId": "SCR-1",
   "screens": [{
-    "id": "SCR-1", "name": "", "purpose": "", "visibleToRoleIds": [], "featureIds": ["FEAT-1"],
+    "id": "SCR-1", "name": "", "route": "/app", "purpose": "", "visibleToRoleIds": [], "featureIds": ["FEAT-1"],
     "layout": [{ "region": "main", "component": "form", "label": "", "fields": [""] }],
     "actions": [{ "label": "", "endpointId": "EP-1", "navigatesTo": "SCR-2", "visibleToRoleIds": ["ROLE-1"] }],
     "states": { "empty": "", "loading": "", "error": "" }

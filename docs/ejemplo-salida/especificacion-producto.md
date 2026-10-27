@@ -401,6 +401,7 @@ flowchart LR
 
 Ingresar con la cuenta institucional.
 
+- **Ruta:** `/app/login`
 - **Visible para:** cualquier visitante, sin sesión
 - **Funcionalidades:** —
 
@@ -421,6 +422,7 @@ Ingresar con la cuenta institucional.
 
 Ver la disponibilidad de las salas en una fecha.
 
+- **Ruta:** `/app/salas`
 - **Visible para:** Estudiante (ROLE-1), Administrador de biblioteca (ROLE-2)
 - **Funcionalidades:** FEAT-1 (Ver disponibilidad)
 
@@ -445,6 +447,7 @@ Ver la disponibilidad de las salas en una fecha.
 
 Reservar un bloque de una sala.
 
+- **Ruta:** `/app/salas/:id/reservar`
 - **Visible para:** Estudiante (ROLE-1)
 - **Funcionalidades:** FEAT-2 (Reservar sala)
 
@@ -467,6 +470,7 @@ Reservar un bloque de una sala.
 
 Ver y cancelar las reservas propias.
 
+- **Ruta:** `/app/mis-reservas`
 - **Visible para:** Estudiante (ROLE-1)
 - **Funcionalidades:** FEAT-2 (Reservar sala), FEAT-3 (Cancelar reserva)
 
@@ -489,6 +493,7 @@ Ver y cancelar las reservas propias.
 
 Crear, editar y desactivar salas.
 
+- **Ruta:** `/app/admin/salas`
 - **Visible para:** Administrador de biblioteca (ROLE-2)
 - **Funcionalidades:** FEAT-4 (Administrar salas)
 

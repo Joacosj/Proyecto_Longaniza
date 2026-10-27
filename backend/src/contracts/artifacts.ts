@@ -124,6 +124,8 @@ export interface FrontendArtifact {
   screens: {
     id: string; // "SCR-1"
     name: string;
+    /** Ruta del navegador, ej. "/app/reservas/:id". Opcional en proyectos antiguos. */
+    route?: string;
     purpose: string;
     visibleToRoleIds: string[];
     featureIds: string[];

@@ -104,8 +104,8 @@ Deno.test("el diagrama ER usa tipos simples y no hay formato de error fijo que c
     unique: false,
   });
   const { productSpec } = renderDocuments(ctx);
-  assert.match(productSpec, /    varchar email UK/);
-  assert.match(productSpec, /    timestamptz_array fallos/);
+  assert.match(productSpec, / {4}varchar email UK/);
+  assert.match(productSpec, / {4}timestamptz_array fallos/);
   assert.doesNotMatch(productSpec, /Formato de error para cualquier respuesta/);
   assert.doesNotMatch(productSpec, /Cuerpo \(JSON\)/);
 });
@@ -114,4 +114,12 @@ Deno.test("el documento de arquitectura no copia las opciones genéricas del cat
   const { architecture } = renderDocuments(ejemplo());
   assert.doesNotMatch(architecture, /o similar|Prisma, Drizzle o Alembic|REST o GraphQL/);
   assert.doesNotMatch(architecture, /Organización de la solución|## \d\. Operación/);
+});
+
+Deno.test("las pantallas indican su ruta y el recorrido no duplica puntos", () => {
+  const ctx = ejemplo();
+  ctx.stages.definition!.mainJourney[0].action = "Abre la web.";
+  const { productSpec } = renderDocuments(ctx);
+  assert.match(productSpec, /- \*\*Ruta:\*\* `\/app\/login`/);
+  assert.doesNotMatch(productSpec, /\.\./);
 });

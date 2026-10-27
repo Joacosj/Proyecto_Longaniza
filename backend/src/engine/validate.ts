@@ -300,6 +300,16 @@ export function parseBackendArtifact(v: unknown, path: string): BackendArtifact 
 const REGIONS = ["header", "sidebar", "main", "footer", "modal"] as const;
 const COMPONENTS = ["title", "text", "form", "table", "list", "card", "button", "nav"] as const;
 
+function screenRoute(v: unknown, path: string): string {
+  const r = str(v, path);
+  if (!/^\/[A-Za-z0-9\-_/:]*$/.test(r)) {
+    throw new Error(
+      `${path} debe ser una ruta del navegador que empiece con "/" (ej. "/app/reportes/:id")`,
+    );
+  }
+  return r;
+}
+
 export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifact {
   const o = obj(v, path);
   return {
@@ -310,6 +320,7 @@ export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifac
       return {
         id: id(s.id, `${p}.id`, "SCR"),
         name: str(s.name, `${p}.name`),
+        route: screenRoute(s.route, `${p}.route`),
         purpose: str(s.purpose, `${p}.purpose`),
         visibleToRoleIds: arr(
           s.visibleToRoleIds ?? [],

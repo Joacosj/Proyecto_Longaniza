@@ -86,7 +86,7 @@ function productSpec(
     "",
     table(
       ["Id", "Rol", "Descripción", "Objetivos"],
-      def.userTypes.map((r) => [r.id, r.name, r.description, r.goals.join("; ")]),
+      def.userTypes.map((r) => [r.id, r.name, r.description, r.goals.map(noPeriod).join("; ")]),
     ),
     "",
     "## 3. Resultados esperados",
@@ -112,7 +112,11 @@ function productSpec(
     "",
     def.mainJourney
       .slice().sort((a, b) => a.step - b.step)
-      .map((s) => `${s.step}. **${roleName(ctx, s.actorRoleId)}:** ${s.action}. → ${s.result}.`)
+      .map((s) =>
+        `${s.step}. **${roleName(ctx, s.actorRoleId)}:** ${sentence(s.action)} → ${
+          sentence(s.result)
+        }`
+      )
       .join("\n"),
     "",
     "## 6. Requisitos funcionales",
@@ -290,6 +294,7 @@ function productSpec(
       "",
       s.purpose,
       "",
+      ...(s.route ? [`- **Ruta:** \`${s.route}\``] : []),
       `- **Visible para:** ${
         s.visibleToRoleIds.length
           ? s.visibleToRoleIds.map((r) => roleName(ctx, r)).join(", ")
@@ -539,6 +544,15 @@ function fieldsTable(fields: Field[]): string {
       f.description ?? "",
     ]),
   );
+}
+
+/** Termina el texto con un solo punto, aunque la IA ya lo haya puesto. */
+function sentence(t: string): string {
+  return `${noPeriod(t)}.`;
+}
+
+function noPeriod(t: string): string {
+  return t.trim().replace(/[.\s]+$/, "");
 }
 
 export function table(headers: string[], rows: string[][]): string {

@@ -75,29 +75,36 @@ console.log(
 
 // ------------------------------------------------------------------ utilidades
 async function loadContext(): Promise<ProjectContext> {
-  // La sesión de 'conversar' trae las preguntas respondidas; si no existe, basta el borrador.
-  try {
-    const s = JSON.parse(await Deno.readTextFile("definicion-sesion.json"));
-    if (s.ctx?.stages?.definition) {
-      return { ...s.ctx, openQuestions: [], stages: { definition: s.ctx.stages.definition } };
-    }
-  } catch { /* sin sesión */ }
-  try {
-    const definition: DefinitionArtifact = JSON.parse(
-      await Deno.readTextFile("definicion-borrador.json"),
-    );
-    return {
-      projectName: "Proyecto",
-      initialIdea: definition.problem.statement,
-      stages: { definition },
-      answeredQuestions: [],
-      openQuestions: [],
-    };
-  } catch {
+  // La sesión de 'conversar' trae nombre, idea y preguntas respondidas; el borrador, la definición.
+  // Se combinan para que los documentos no pierdan el nombre ni las decisiones confirmadas.
+  const session = await readJson<{ ctx?: ProjectContext }>("definicion-sesion.json");
+  const draft = await readJson<DefinitionArtifact>("definicion-borrador.json");
+  const definition = session?.ctx?.stages?.definition ?? draft;
+  if (!definition) {
     console.log(
       "No hay definición: primero ejecuta 'deno task conversar' hasta obtener el borrador.",
     );
     Deno.exit(1);
+  }
+  if (!session?.ctx) {
+    console.log(
+      "Aviso: no está definicion-sesion.json; el nombre y las decisiones confirmadas no aparecerán.",
+    );
+  }
+  return {
+    projectName: session?.ctx?.projectName ?? "Proyecto",
+    initialIdea: session?.ctx?.initialIdea ?? definition.problem.statement,
+    answeredQuestions: session?.ctx?.answeredQuestions ?? [],
+    openQuestions: [],
+    stages: { definition },
+  };
+}
+
+async function readJson<T>(path: string): Promise<T | undefined> {
+  try {
+    return JSON.parse(await Deno.readTextFile(path)) as T;
+  } catch {
+    return undefined;
   }
 }
 
