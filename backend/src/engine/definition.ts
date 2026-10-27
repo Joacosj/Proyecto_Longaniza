@@ -30,6 +30,8 @@ export interface DefinitionTurn {
 }
 
 const MAX_QUESTIONS_PER_TURN = 4;
+/** Con preguntas sin responder, no se agregan más de las que caben hasta este total. */
+const MAX_OPEN_QUESTIONS = 4;
 
 export async function converseDefinition(
   complete: JsonCompleter,
@@ -53,9 +55,12 @@ export async function converseDefinition(
     known.add(key);
     newQuestions.push(q);
   }
-  // Bloqueantes primero, y no más del máximo por turno.
+  // Bloqueantes primero, y no más del máximo por turno. Si ya hay preguntas abiertas, se
+  // agregan solo las que caben hasta MAX_OPEN_QUESTIONS (al menos una, por si la última
+  // respuesta abrió una decisión nueva), para que la lista no crezca sin control.
   newQuestions.sort((a, b) => Number(b.isBlocking) - Number(a.isBlocking));
-  newQuestions.splice(MAX_QUESTIONS_PER_TURN);
+  const room = Math.max(1, MAX_OPEN_QUESTIONS - context.openQuestions.length);
+  newQuestions.splice(Math.min(MAX_QUESTIONS_PER_TURN, room));
 
   const blockingPending = context.openQuestions.some((q) => q.isBlocking) ||
     newQuestions.some((q) => q.isBlocking);
