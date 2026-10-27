@@ -160,18 +160,26 @@ export function invitationRoutes(deps: AuthDeps) {
       ) {
         throw new ApiError("NOT_FOUND", "La invitación no existe o ya no es válida");
       }
+      const sameEmail = inv.email.toLowerCase() === user.email.toLowerCase();
+      const members = membersRepo(tx);
+      const existing = await members.find(inv.projectId, user.id);
+
+      // Idempotente para su destinatario: si ya la aceptó (doble clic, o vuelve a abrir el
+      // enlace) y sigue siendo miembro, responde como si la aceptara de nuevo.
       if (inv.status === "accepted") {
+        if (sameEmail && existing) return { projectId: inv.projectId, role: existing.role };
         throw new ApiError("CONFLICT", "Esta invitación ya fue usada");
       }
-      if (inv.email.toLowerCase() !== user.email.toLowerCase()) {
+      if (!sameEmail) {
         throw new ApiError("CONFLICT", "Esta invitación es para otro correo", {
           invitedEmail: inv.email,
         });
       }
 
-      const members = membersRepo(tx);
-      if (await members.find(inv.projectId, user.id)) {
-        throw new ApiError("CONFLICT", "Ya eres miembro de este proyecto");
+      if (existing) {
+        // Ya era miembro por otra vía: la invitación queda usada y conserva su rol actual.
+        await invitations.setStatus(inv.id, "accepted");
+        return { projectId: inv.projectId, role: existing.role };
       }
       await members.add({
         projectId: inv.projectId,
