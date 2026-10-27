@@ -57,7 +57,8 @@ export function loadLlmConfig(
     baseUrl: baseUrl!,
     apiKey: apiKey!,
     model: model!,
-    timeoutMs: Number(env("LLM_TIMEOUT_MS") ?? 120_000),
+    // Generar una etapa completa con un modelo que razona puede tardar varios minutos.
+    timeoutMs: Number(env("LLM_TIMEOUT_MS") ?? 300_000),
     maxRetries: 3,
     retryBaseMs: 1_000,
   };
