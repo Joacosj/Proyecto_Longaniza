@@ -22,10 +22,9 @@ La unión entre ambas es la interfaz `Engine` en `backend/src/engine/types.ts`. 
 (reservas de salas), y `checkConsistency`, `renderDocuments` y `listArchitectures` ya son los
 reales. Solo `converse` es de relleno.
 
-El motor real ya existe: `createEngineFromEnv()` en `backend/src/engine/engine.ts` (requiere las
-variables `LLM_*` del `.env`). La etapa de definición ya conversa con la IA; las demás etapas
-todavía devuelven el ejemplo. Para usarlo, cambia `createFakeEngine()` por
-`createEngineFromEnv()` en `main.ts`. En las pruebas automáticas sigue usando el falso.
+El motor real ya está conectado en `main.ts`: si el `.env` tiene las variables `LLM_*`, el
+servidor usa la IA (Microsoft Foundry); si no, usa el motor falso y lo avisa al arrancar. Con
+`USE_FAKE_ENGINE=1` se fuerza el falso. Las pruebas automáticas siempre usan el falso.
 
 ## Stack y reglas
 

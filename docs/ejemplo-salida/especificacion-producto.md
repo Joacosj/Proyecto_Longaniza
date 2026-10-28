@@ -195,8 +195,6 @@ API REST JSON bajo el prefijo /api.
 
 **Autenticación:** Cookie de sesión HttpOnly. Tras el SSO, el backend crea una sesión y envía la cookie 'sid'. Sin cookie válida: 401. Con cookie pero sin el rol requerido: 403.
 
-Formato de error para cualquier respuesta 4xx o 5xx: `{ "error": { "code": string, "message": string } }`.
-
 | Id | Método | Ruta | Descripción | Roles |
 |---|---|---|---|---|
 | EP-1 | GET | `/rooms` | Lista salas activas con sus bloques ocupados en una fecha. | cualquier usuario con sesión |
@@ -239,7 +237,7 @@ Crea una reserva.
 - **Tablas:** `reservations`, `rooms`
 - **Requisitos:** REQ-2
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|
@@ -309,7 +307,7 @@ Crea una sala.
 - **Tablas:** `rooms`
 - **Requisitos:** REQ-5
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|
@@ -342,7 +340,7 @@ Edita una sala o la activa/desactiva.
 |---|---|---|---|---|
 | `id` | uuid | sí |  |  |
 
-**Cuerpo (JSON):**
+**Cuerpo:**
 
 | Nombre | Tipo | Obligatorio | Validación | Descripción |
 |---|---|---|---|---|
@@ -403,6 +401,7 @@ flowchart LR
 
 Ingresar con la cuenta institucional.
 
+- **Ruta:** `/app/login`
 - **Visible para:** cualquier visitante, sin sesión
 - **Funcionalidades:** —
 
@@ -423,6 +422,7 @@ Ingresar con la cuenta institucional.
 
 Ver la disponibilidad de las salas en una fecha.
 
+- **Ruta:** `/app/salas`
 - **Visible para:** Estudiante (ROLE-1), Administrador de biblioteca (ROLE-2)
 - **Funcionalidades:** FEAT-1 (Ver disponibilidad)
 
@@ -447,6 +447,7 @@ Ver la disponibilidad de las salas en una fecha.
 
 Reservar un bloque de una sala.
 
+- **Ruta:** `/app/salas/:id/reservar`
 - **Visible para:** Estudiante (ROLE-1)
 - **Funcionalidades:** FEAT-2 (Reservar sala)
 
@@ -469,6 +470,7 @@ Reservar un bloque de una sala.
 
 Ver y cancelar las reservas propias.
 
+- **Ruta:** `/app/mis-reservas`
 - **Visible para:** Estudiante (ROLE-1)
 - **Funcionalidades:** FEAT-2 (Reservar sala), FEAT-3 (Cancelar reserva)
 
@@ -491,6 +493,7 @@ Ver y cancelar las reservas propias.
 
 Crear, editar y desactivar salas.
 
+- **Ruta:** `/app/admin/salas`
 - **Visible para:** Administrador de biblioteca (ROLE-2)
 - **Funcionalidades:** FEAT-4 (Administrar salas)
 

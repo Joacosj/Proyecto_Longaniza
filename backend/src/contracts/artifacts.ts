@@ -124,6 +124,8 @@ export interface FrontendArtifact {
   screens: {
     id: string; // "SCR-1"
     name: string;
+    /** Ruta del navegador, ej. "/app/reservas/:id". Opcional en proyectos antiguos. */
+    route?: string;
     purpose: string;
     visibleToRoleIds: string[];
     featureIds: string[];
@@ -168,7 +170,14 @@ export interface ArchitectureArtifact {
   /** Por qué esta arquitectura calza con este producto, citando decisiones previas. */
   justification: string;
   discarded: { key: string; reason: string }[];
-  stack: { database: string; backend: string; frontend: string; communication: string };
+  stack: {
+    database: string;
+    backend: string;
+    frontend: string;
+    communication: string;
+    /** Dónde se guardan archivos subidos por usuarios (fotos, adjuntos). Omitir si no hay. */
+    fileStorage?: string;
+  };
   deployment: {
     strategy: string;
     environments: string[];

@@ -660,6 +660,7 @@ const EJEMPLO: ProjectContext = {
         {
           id: "SCR-1",
           name: "Inicio de sesión",
+          route: "/app/login",
           purpose: "Ingresar con la cuenta institucional.",
           visibleToRoleIds: [],
           featureIds: [],
@@ -677,6 +678,7 @@ const EJEMPLO: ProjectContext = {
         {
           id: "SCR-2",
           name: "Salas disponibles",
+          route: "/app/salas",
           purpose: "Ver la disponibilidad de las salas en una fecha.",
           visibleToRoleIds: ["ROLE-1", "ROLE-2"],
           featureIds: ["FEAT-1"],
@@ -710,6 +712,7 @@ const EJEMPLO: ProjectContext = {
         {
           id: "SCR-3",
           name: "Nueva reserva",
+          route: "/app/salas/:id/reservar",
           purpose: "Reservar un bloque de una sala.",
           visibleToRoleIds: ["ROLE-1"],
           featureIds: ["FEAT-2"],
@@ -736,6 +739,7 @@ const EJEMPLO: ProjectContext = {
         {
           id: "SCR-4",
           name: "Mis reservas",
+          route: "/app/mis-reservas",
           purpose: "Ver y cancelar las reservas propias.",
           visibleToRoleIds: ["ROLE-1"],
           featureIds: ["FEAT-2", "FEAT-3"],
@@ -762,6 +766,7 @@ const EJEMPLO: ProjectContext = {
         {
           id: "SCR-5",
           name: "Administrar salas",
+          route: "/app/admin/salas",
           purpose: "Crear, editar y desactivar salas.",
           visibleToRoleIds: ["ROLE-2"],
           featureIds: ["FEAT-4"],

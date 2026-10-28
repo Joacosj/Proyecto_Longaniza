@@ -7,3 +7,4 @@ dist/
 .vscode/
 backend/definicion-borrador.json
 backend/definicion-sesion.json
+backend/salida/

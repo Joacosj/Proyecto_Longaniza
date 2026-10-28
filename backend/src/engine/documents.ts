@@ -86,7 +86,7 @@ function productSpec(
     "",
     table(
       ["Id", "Rol", "Descripción", "Objetivos"],
-      def.userTypes.map((r) => [r.id, r.name, r.description, r.goals.join("; ")]),
+      def.userTypes.map((r) => [r.id, r.name, r.description, r.goals.map(noPeriod).join("; ")]),
     ),
     "",
     "## 3. Resultados esperados",
@@ -112,7 +112,11 @@ function productSpec(
     "",
     def.mainJourney
       .slice().sort((a, b) => a.step - b.step)
-      .map((s) => `${s.step}. **${roleName(ctx, s.actorRoleId)}:** ${s.action}. → ${s.result}.`)
+      .map((s) =>
+        `${s.step}. **${roleName(ctx, s.actorRoleId)}:** ${sentence(s.action)} → ${
+          sentence(s.result)
+        }`
+      )
       .join("\n"),
     "",
     "## 6. Requisitos funcionales",
@@ -231,9 +235,6 @@ function productSpec(
     "",
     `**Autenticación:** ${be.auth.scheme}. ${be.auth.description}`,
     "",
-    "Formato de error para cualquier respuesta 4xx o 5xx: " +
-      '`{ "error": { "code": string, "message": string } }`.',
-    "",
     table(
       ["Id", "Método", "Ruta", "Descripción", "Roles"],
       be.endpoints.map((e) => [e.id, e.method, `\`${e.path}\``, e.summary, endpointRoles(ctx, e)]),
@@ -256,7 +257,7 @@ function productSpec(
       ["Parámetros de ruta", e.request.pathParams],
       ["Parámetros de consulta", e.request.queryParams],
       ["Cabeceras", e.request.headers],
-      ["Cuerpo (JSON)", e.request.body],
+      ["Cuerpo", e.request.body],
     ];
     for (const [title, fields] of sections) {
       if (fields.length) out.push(`**${title}:**`, "", fieldsTable(fields), "");
@@ -293,6 +294,7 @@ function productSpec(
       "",
       s.purpose,
       "",
+      ...(s.route ? [`- **Ruta:** \`${s.route}\``] : []),
       `- **Visible para:** ${
         s.visibleToRoleIds.length
           ? s.visibleToRoleIds.map((r) => roleName(ctx, r)).join(", ")
@@ -403,31 +405,22 @@ function architectureDoc(
       ["Backend", ar.stack.backend],
       ["Frontend", ar.stack.frontend],
       ["Comunicación", ar.stack.communication],
+      ...(ar.stack.fileStorage ? [["Archivos subidos", ar.stack.fileStorage]] : []),
     ]),
     "",
   );
 
-  if (tpl) {
-    out.push(
-      "## 3. Organización de la solución",
-      "",
-      `- **Backend:** ${tpl.backend}`,
-      `- **Frontend:** ${tpl.frontend}`,
-      `- **Persistencia:** ${tpl.persistence}`,
-      `- **Comunicación:** ${tpl.communication}`,
-      `- **Infraestructura:** ${tpl.infrastructure}`,
-      "",
-    );
-  }
-
+  // Las secciones del catálogo (backend, persistencia, infraestructura, operación) describen
+  // opciones genéricas ("React, Vue o similar"). No se copian aquí: contradecirían las
+  // decisiones concretas de este proyecto. Solo se usa el resumen de la sección 1.
   out.push(
-    "## 4. Base de datos",
+    "## 3. Base de datos",
     "",
     `Motor: ${ar.stack.database}. Tablas: ${db.entities.map((e) => `\`${e.name}\``).join(", ")}. ` +
       "Las columnas, claves, índices y restricciones están en la sección 10 de la especificación " +
       "de producto y deben crearse mediante migraciones versionadas.",
     "",
-    "## 5. Autenticación y autorización",
+    "## 4. Autenticación y autorización",
     "",
     `- **Identidad:** ${ar.auth.identity}`,
     `- **SSO:** ${ar.auth.sso}`,
@@ -438,7 +431,7 @@ function architectureDoc(
     "La autorización se valida siempre en el backend. Sin identidad válida: 401. Con identidad " +
       "pero sin permiso sobre el recurso: 403.",
     "",
-    "## 6. Despliegue",
+    "## 5. Despliegue",
     "",
     ar.deployment.strategy,
     "",
@@ -454,7 +447,7 @@ function architectureDoc(
     );
   }
   out.push(
-    "## 7. Observabilidad",
+    "## 6. Observabilidad",
     "",
     table(["Aspecto", "Decisión"], [
       ["Logs", ar.observability.logging],
@@ -464,7 +457,6 @@ function architectureDoc(
     ]),
     "",
   );
-  if (tpl) out.push("## 8. Operación", "", tpl.operation, "");
 
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 }
@@ -481,7 +473,7 @@ function erDiagram(db: DatabaseArtifact): string {
         fkCols.has(`${e.name}.${a.name}`) && "FK",
         a.unique && !a.primaryKey && "UK",
       ].filter(Boolean).join(",");
-      lines.push(`    ${mermaidId(a.type)} ${mermaidId(a.name)}${keys ? " " + keys : ""}`);
+      lines.push(`    ${erType(a.type)} ${mermaidId(a.name)}${keys ? " " + keys : ""}`);
     }
     lines.push("  }");
   }
@@ -554,6 +546,15 @@ function fieldsTable(fields: Field[]): string {
   );
 }
 
+/** Termina el texto con un solo punto, aunque la IA ya lo haya puesto. */
+function sentence(t: string): string {
+  return `${noPeriod(t)}.`;
+}
+
+function noPeriod(t: string): string {
+  return t.trim().replace(/[.\s]+$/, "");
+}
+
 export function table(headers: string[], rows: string[][]): string {
   const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim();
   return [
@@ -565,6 +566,12 @@ export function table(headers: string[], rows: string[][]): string {
 
 function bullets(items: string[], empty = "_Ninguno._"): string {
   return items.length ? items.map((i) => `- ${i}`).join("\n") : empty;
+}
+
+/** Tipo legible para Mermaid: "varchar(100)" → "varchar", "timestamptz[]" → "timestamptz_array". */
+function erType(type: string): string {
+  const base = type.trim().replace(/\(.*\)/, "").replace(/\[\]$/, "_array");
+  return mermaidId(base).replace(/_+/g, "_").replace(/^_|_$/g, "") || "text";
 }
 
 function mermaidId(s: string): string {

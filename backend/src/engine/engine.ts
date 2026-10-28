@@ -1,37 +1,67 @@
 /**
- * Motor real de Ideator. Reemplaza a createFakeEngine() en main.ts.
+ * Motor real de Ideator.
  *
- * Estado: la etapa de definición (converse) está implementada. La generación de las etapas
- * siguientes (generate) es la tarea B7; mientras tanto devuelve las del proyecto de ejemplo
- * para que la plataforma pueda probar el flujo completo.
+ * - converse: conversación de la etapa de definición (definition.ts).
+ * - generate: definición → borrador a partir de lo conversado; demás etapas → propuesta
+ *   completa a partir de las anteriores (generate.ts).
+ * - checkConsistency, renderDocuments, listArchitectures: deterministas, sin IA.
+ *
+ * Los errores de la IA se convierten en ApiError con un mensaje claro para la interfaz.
  */
 import type { ArtifactByStage } from "../contracts/artifacts.ts";
+import { ApiError } from "../http/errors.ts";
 import { listArchitectures } from "./architectures.ts";
 import { checkConsistency } from "./consistency.ts";
 import { converseDefinition, type JsonCompleter } from "./definition.ts";
 import { renderDocuments } from "./documents.ts";
-import { ejemplo } from "./ejemplo.ts";
-import { completeJson, type LlmConfig, loadLlmConfig } from "./llm.ts";
+import { generateStage } from "./generate.ts";
+import { completeJson, type LlmConfig, LlmError, loadLlmConfig } from "./llm.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
 export function createEngine(complete: JsonCompleter): Engine {
   return {
-    converse: async ({ context, stage, history, userMessage }) => {
-      if (stage !== "definition") {
-        // Las demás etapas se generan con generate(); la conversación es para la definición.
-        return {
-          reply: "En esta etapa usa 'Generar propuesta' y luego edita el resultado.",
-          newQuestions: [],
-        };
-      }
-      return await converseDefinition(complete, { context, history, userMessage });
-    },
-    generate: <K extends GeneratableStage>({ stage }: { stage: K }) =>
-      // TODO(B7): generar con la IA a partir de las etapas anteriores.
-      Promise.resolve({
-        artifact: ejemplo().stages[stage] as ArtifactByStage[K],
-        questions: [],
+    converse: ({ context, stage, history, userMessage }) =>
+      withFriendlyErrors(async () => {
+        if (stage !== "definition") {
+          return {
+            reply: 'En esta etapa usa "Generar con IA" y luego edita el resultado.',
+            newQuestions: [],
+          };
+        }
+        return await converseDefinition(complete, { context, history, userMessage });
       }),
+
+    generate: <K extends GeneratableStage>(
+      { context, stage }: { context: Parameters<Engine["generate"]>[0]["context"]; stage: K },
+    ) =>
+      withFriendlyErrors(async () => {
+        if (stage === "definition") {
+          const turn = await converseDefinition(complete, {
+            context,
+            history: [],
+            userMessage: "Con la información y las respuestas disponibles, entrega el borrador " +
+              "completo de la definición.",
+          });
+          if (!turn.artifactDraft) {
+            throw new ApiError(
+              "CONFLICT",
+              "Todavía hay decisiones bloqueantes: responde las preguntas pendientes antes de " +
+                "generar la definición.",
+              { questions: turn.newQuestions },
+            );
+          }
+          return {
+            artifact: turn.artifactDraft as ArtifactByStage[K],
+            questions: turn.newQuestions,
+          };
+        }
+        const out = await generateStage(complete, {
+          context,
+          stage: stage as Exclude<GeneratableStage, "definition">,
+        });
+        return { artifact: out.artifact as ArtifactByStage[K], questions: out.questions };
+      }),
+
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),
     listArchitectures,
@@ -41,4 +71,26 @@ export function createEngine(complete: JsonCompleter): Engine {
 /** Motor conectado a Microsoft Foundry según las variables LLM_* del entorno. */
 export function createEngineFromEnv(config: LlmConfig = loadLlmConfig()): Engine {
   return createEngine((opts) => completeJson(config, opts));
+}
+
+const FRIENDLY: Record<LlmError["kind"], string> = {
+  config: "La IA no está bien configurada",
+  auth: "La API key de la IA no es válida",
+  rate_limit: "Se alcanzó el límite de uso de la IA; intenta en unos minutos",
+  timeout: "La IA tardó demasiado en responder; intenta de nuevo",
+  network: "No se pudo conectar con la IA",
+  http: "La IA respondió con un error",
+  bad_response: "La IA entregó una respuesta inválida; intenta de nuevo",
+};
+
+async function withFriendlyErrors<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof LlmError) {
+      console.error(`[motor] ${e.kind}: ${e.message}`);
+      throw new ApiError("INTERNAL", `${FRIENDLY[e.kind]}.`, { reason: e.kind });
+    }
+    throw e;
+  }
 }

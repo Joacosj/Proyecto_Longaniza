@@ -219,6 +219,19 @@ export function checkConsistency(
     duplicates(fe.screens.map((s) => s.id)).forEach((id) =>
       add("critical", ["frontend"], `La pantalla ${id} está definida más de una vez.`)
     );
+    duplicates(fe.screens.map((s) => s.route).filter((r): r is string => !!r)).forEach((r) =>
+      add("critical", ["frontend"], `La ruta ${r} está asignada a más de una pantalla.`)
+    );
+    if (be) {
+      const apiPaths = new Set(be.endpoints.map((e) => e.path));
+      for (const s of fe.screens.filter((s) => s.route && apiPaths.has(s.route))) {
+        add(
+          "critical",
+          ["frontend", "backend"],
+          `La pantalla ${s.id} usa la ruta ${s.route}, que también es una ruta de la API.`,
+        );
+      }
+    }
     if (!screenIds.has(fe.entryScreenId)) {
       add("critical", ["frontend"], `La pantalla de inicio ${fe.entryScreenId} no existe.`);
     }

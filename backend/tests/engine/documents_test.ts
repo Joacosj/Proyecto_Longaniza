@@ -63,7 +63,7 @@ Deno.test("el documento de arquitectura incluye la elección, el stack, la auten
   }
   assert.ok(architecture.includes(ar.auth.sso));
   assert.match(architecture, /### Alternativas descartadas/);
-  assert.match(architecture, /## 7\. Observabilidad/);
+  assert.match(architecture, /## 6\. Observabilidad/);
 });
 
 Deno.test("los diagramas Mermaid incluyen entidades, relaciones y navegación", () => {
@@ -91,4 +91,35 @@ Deno.test("falla con un mensaje claro si falta una etapa", () => {
 
 Deno.test("table escapa barras verticales y saltos de línea", () => {
   assert.equal(table(["a"], [["x | y\nz"]]), "| a |\n|---|\n| x \\| y z |");
+});
+
+Deno.test("el diagrama ER usa tipos simples y no hay formato de error fijo que contradiga la API", () => {
+  const ctx = ejemplo();
+  ctx.stages.database!.entities[0].attributes[1].type = "varchar(254)";
+  ctx.stages.database!.entities[0].attributes.push({
+    name: "fallos",
+    type: "timestamptz[]",
+    nullable: false,
+    primaryKey: false,
+    unique: false,
+  });
+  const { productSpec } = renderDocuments(ctx);
+  assert.match(productSpec, / {4}varchar email UK/);
+  assert.match(productSpec, / {4}timestamptz_array fallos/);
+  assert.doesNotMatch(productSpec, /Formato de error para cualquier respuesta/);
+  assert.doesNotMatch(productSpec, /Cuerpo \(JSON\)/);
+});
+
+Deno.test("el documento de arquitectura no copia las opciones genéricas del catálogo", () => {
+  const { architecture } = renderDocuments(ejemplo());
+  assert.doesNotMatch(architecture, /o similar|Prisma, Drizzle o Alembic|REST o GraphQL/);
+  assert.doesNotMatch(architecture, /Organización de la solución|## \d\. Operación/);
+});
+
+Deno.test("las pantallas indican su ruta y el recorrido no duplica puntos", () => {
+  const ctx = ejemplo();
+  ctx.stages.definition!.mainJourney[0].action = "Abre la web.";
+  const { productSpec } = renderDocuments(ctx);
+  assert.match(productSpec, /- \*\*Ruta:\*\* `\/app\/login`/);
+  assert.doesNotMatch(productSpec, /\.\./);
 });

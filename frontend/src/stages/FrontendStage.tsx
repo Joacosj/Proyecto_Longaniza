@@ -29,7 +29,9 @@ export function navigationDiagram(artifact: FrontendArtifact): string {
  * Etapa 4: mockup de baja fidelidad de cada pantalla, dibujado con cajas a partir de
  * `layout`, y el mapa de navegación entre pantallas.
  */
-export function FrontendStage({ artifact, editable, onChange }: StageComponentProps<FrontendArtifact>) {
+export function FrontendStage(
+  { artifact, editable, onChange }: StageComponentProps<FrontendArtifact>,
+) {
   const screens = artifact.screens ?? [];
   const names = new Map(screens.map((s) => [s.id, s.name]));
 
@@ -40,12 +42,16 @@ export function FrontendStage({ artifact, editable, onChange }: StageComponentPr
     <div className="fe stack">
       <section>
         <h3>Mapa de navegación</h3>
-        {screens.length === 0
-          ? <p className="muted">No hay pantallas definidas.</p>
-          : <Mermaid code={navigationDiagram(artifact)} label="Mapa de navegación entre pantallas" />}
+        {screens.length === 0 ? <p className="muted">No hay pantallas definidas.</p> : (
+          <Mermaid
+            code={navigationDiagram(artifact)}
+            label="Mapa de navegación entre pantallas"
+          />
+        )}
         {artifact.entryScreenId && (
           <p className="muted small">
-            Se entra por <strong>{names.get(artifact.entryScreenId) ?? artifact.entryScreenId}</strong>.
+            Se entra por{" "}
+            <strong>{names.get(artifact.entryScreenId) ?? artifact.entryScreenId}</strong>.
           </p>
         )}
       </section>
@@ -78,8 +84,14 @@ export function FrontendStage({ artifact, editable, onChange }: StageComponentPr
                 />
               )
               : <p>{s.purpose}</p>}
+            {s.route && (
+              <p className="muted small">
+                Ruta: <code>{s.route}</code>
+              </p>
+            )}
             <p className="muted small">
-              Visible para {(s.visibleToRoleIds ?? []).length ? s.visibleToRoleIds.join(", ") : "todos"}
+              Visible para{" "}
+              {(s.visibleToRoleIds ?? []).length ? s.visibleToRoleIds.join(", ") : "todos"}
               {s.featureIds?.length ? ` · funcionalidades ${s.featureIds.join(", ")}` : ""}
             </p>
 
@@ -87,9 +99,18 @@ export function FrontendStage({ artifact, editable, onChange }: StageComponentPr
 
             {s.states && (
               <dl className="states">
-                <div><dt>Vacío</dt><dd>{s.states.empty}</dd></div>
-                <div><dt>Cargando</dt><dd>{s.states.loading}</dd></div>
-                <div><dt>Error</dt><dd>{s.states.error}</dd></div>
+                <div>
+                  <dt>Vacío</dt>
+                  <dd>{s.states.empty}</dd>
+                </div>
+                <div>
+                  <dt>Cargando</dt>
+                  <dd>{s.states.loading}</dd>
+                </div>
+                <div>
+                  <dt>Error</dt>
+                  <dd>{s.states.error}</dd>
+                </div>
               </dl>
             )}
           </article>
@@ -112,10 +133,18 @@ function Mockup({ screen, names }: { screen: Screen; names: Map<string, string> 
 
   return (
     <figure className="mock" aria-label={`Boceto de ${screen.name}`}>
-      <div className="mock-chrome" aria-hidden="true"><span /><span /><span /></div>
+      <div className="mock-chrome" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
       <div className={`mock-body${sidebar.length ? " has-sidebar" : ""}`}>
-        {header.length > 0 && <div className="mock-region mock-header">{header.map(renderBlock)}</div>}
-        {sidebar.length > 0 && <div className="mock-region mock-sidebar">{sidebar.map(renderBlock)}</div>}
+        {header.length > 0 && (
+          <div className="mock-region mock-header">{header.map(renderBlock)}</div>
+        )}
+        {sidebar.length > 0 && (
+          <div className="mock-region mock-sidebar">{sidebar.map(renderBlock)}</div>
+        )}
         <div className="mock-region mock-main">
           {main.map(renderBlock)}
           {actions.length > 0 && (
@@ -123,13 +152,17 @@ function Mockup({ screen, names }: { screen: Screen; names: Map<string, string> 
               {actions.map((a, i) => (
                 <span key={i} className="mock-button" title={actionHint(a, names)}>
                   {a.label}
-                  {a.navigatesTo && <span className="mock-to"> → {names.get(a.navigatesTo) ?? a.navigatesTo}</span>}
+                  {a.navigatesTo && (
+                    <span className="mock-to">→ {names.get(a.navigatesTo) ?? a.navigatesTo}</span>
+                  )}
                 </span>
               ))}
             </div>
           )}
         </div>
-        {footer.length > 0 && <div className="mock-region mock-footer">{footer.map(renderBlock)}</div>}
+        {footer.length > 0 && (
+          <div className="mock-region mock-footer">{footer.map(renderBlock)}</div>
+        )}
         {modal.length > 0 && (
           <div className="mock-modal-layer">
             <div className="mock-modal">{modal.map(renderBlock)}</div>
@@ -157,7 +190,8 @@ function renderBlock(b: Block, i: number) {
       return (
         <div key={i} className="mk mk-text">
           <span className="mk-cap">{b.label}</span>
-          <span className="bar" /><span className="bar short" />
+          <span className="bar" />
+          <span className="bar short" />
         </div>
       );
     case "nav":
@@ -172,7 +206,10 @@ function renderBlock(b: Block, i: number) {
         <div key={i} className="mk mk-form">
           <span className="mk-cap">{b.label}</span>
           {fields.map((f) => (
-            <span key={f} className="mk-field"><span>{f}</span><span className="mk-input" /></span>
+            <span key={f} className="mk-field">
+              <span>{f}</span>
+              <span className="mk-input" />
+            </span>
           ))}
         </div>
       );
@@ -180,9 +217,15 @@ function renderBlock(b: Block, i: number) {
       return (
         <div key={i} className="mk mk-table">
           <span className="mk-cap">{b.label}</span>
-          <div className="mk-grid" style={{ gridTemplateColumns: `repeat(${Math.max(1, fields.length)}, minmax(0, 1fr))` }}>
+          <div
+            className="mk-grid"
+            style={{ gridTemplateColumns: `repeat(${Math.max(1, fields.length)}, minmax(0, 1fr))` }}
+          >
             {fields.map((f) => <span key={f} className="mk-th">{f}</span>)}
-            {Array.from({ length: Math.max(1, fields.length) * 3 }, (_, k) => <span key={k} className="bar" />)}
+            {Array.from(
+              { length: Math.max(1, fields.length) * 3 },
+              (_, k) => <span key={k} className="bar" />,
+            )}
           </div>
         </div>
       );

@@ -157,6 +157,7 @@ function Decisions({ artifact }: { artifact: ArchitectureArtifact }) {
             <div><dt>Backend</dt><dd>{stack.backend}</dd></div>
             <div><dt>Frontend</dt><dd>{stack.frontend}</dd></div>
             <div><dt>Comunicación</dt><dd>{stack.communication}</dd></div>
+            {stack.fileStorage && <div><dt>Archivos</dt><dd>{stack.fileStorage}</dd></div>}
           </dl>
           </div>
         )}

@@ -292,3 +292,13 @@ Deno.test("hasCritical distingue críticas de advertencias", () => {
   assert.equal(hasCritical([{ severity: "warning", stages: [], description: "" }]), false);
   assert.equal(hasCritical([{ severity: "critical", stages: [], description: "" }]), true);
 });
+
+Deno.test("detecta rutas de pantalla repetidas o que chocan con la API", () => {
+  const ctx = ejemplo();
+  const screens = ctx.stages.frontend!.screens;
+  screens[1].route = screens[0].route;
+  screens[2].route = "/rooms";
+  const text = checkConsistency(ctx).map((i) => i.description).join("\n");
+  assert.match(text, /ruta \/app\/login está asignada a más de una pantalla/);
+  assert.match(text, /SCR-3 usa la ruta \/rooms/);
+});
