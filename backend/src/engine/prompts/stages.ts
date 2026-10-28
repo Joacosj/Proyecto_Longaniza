@@ -129,6 +129,9 @@ const FRONTEND = `
   error ni retornos genéricos (como volver al inicio al cerrar sesión): eso va en la pantalla.
   entryScreenId: la pantalla inicial.
 - No agregues pantallas para funcionalidades fuera del MVP. Usa todos los endpoints.
+- Si la definición dice que una funcionalidad se opera fuera de la aplicación (un comando de
+  despliegue, una herramienta interna del equipo técnico), no inventes una pantalla: inclúyela
+  en "featuresWithoutScreen" con su FEAT-n y una frase que diga cómo se opera.
 
 Forma de "artifact":
 {
@@ -139,7 +142,8 @@ Forma de "artifact":
     "actions": [{ "label": "", "endpointId": "EP-1", "navigatesTo": "SCR-2", "visibleToRoleIds": ["ROLE-1"] }],
     "states": { "empty": "", "loading": "", "error": "" }
   }],
-  "navigation": [{ "from": "SCR-1", "to": "SCR-2", "trigger": "" }]
+  "navigation": [{ "from": "SCR-1", "to": "SCR-2", "trigger": "" }],
+  "featuresWithoutScreen": []
 }
 `.trim();
 

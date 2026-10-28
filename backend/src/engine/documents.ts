@@ -283,6 +283,16 @@ function productSpec(
     "",
     `Pantalla inicial: **${fe.entryScreenId} (${screens.get(fe.entryScreenId) ?? "?"})**.`,
     "",
+    ...(fe.featuresWithoutScreen?.length
+      ? [
+        "**Funcionalidades sin pantalla** (se operan fuera de la interfaz; no crear pantallas para ellas):",
+        "",
+        ...fe.featuresWithoutScreen.map((f) =>
+          `- **${f.featureId} (${features.get(f.featureId) ?? "?"}):** ${f.reason}`
+        ),
+      ]
+      : []),
+    "",
     "```mermaid",
     navigationDiagram(fe),
     "```",
