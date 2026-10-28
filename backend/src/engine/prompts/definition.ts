@@ -92,6 +92,11 @@ Reglas del borrador:
   cómo cambia su contraseña o credencial (por ejemplo, una contraseña inicial entregada por un
   administrador) y cómo se desactiva. Lo que quede fuera del MVP, dilo explícitamente.
 - Incluye al menos un caso borde por cada situación de la sección 7 que aplique.
+- Mantén el MVP pequeño. No agregues requisitos de operación o cumplimiento que el usuario no
+  pidió: respaldos y restauraciones, plazos de purga, retención de auditorías, procedimientos de
+  infraestructura o accesos por SSH. Si una decisión del usuario los vuelve necesarios (por
+  ejemplo, consultar la identidad de un autor), define el mecanismo más simple que la cumpla,
+  en una sola regla.
 
 ## Formato de respuesta
 Responde solo un objeto JSON con esta forma exacta:

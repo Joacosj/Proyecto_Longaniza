@@ -515,6 +515,8 @@ Crear, editar y desactivar salas.
 
 ## 13. Decisiones confirmadas
 
+Respuestas dadas durante la definición, en orden. Son contexto: si alguna parece distinta de las secciones anteriores, prevalecen las secciones anteriores, que ya integran todas las respuestas.
+
 - **¿Cómo inician sesión los estudiantes?** Con su cuenta institucional de Microsoft (SSO). No habrá registro con contraseña.
 - **¿Cuánto puede durar una reserva y cuántas puede tener un estudiante a la vez?** Máximo 2 horas por reserva y máximo 2 reservas activas por estudiante.
 

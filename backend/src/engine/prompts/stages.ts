@@ -19,6 +19,10 @@ Reglas generales:
   implementará de una vez: cada mecanismo extra es una oportunidad de error. No agregues
   complejidad que nadie pidió (idempotencia, hashes canónicos, triggers con lógica, colas,
   cachés) salvo que un requisito o regla la exija explícitamente.
+- Las tareas del equipo técnico que no tienen pantalla (crear cuentas iniciales, cargar
+  configuración, consultas excepcionales) se resuelven como comandos de línea del mismo backend
+  que usan sus servicios y su base de datos directamente. No crees endpoints HTTP, sockets ni
+  protocolos especiales para ellas, y describe cada comando: nombre, argumentos y resultado.
 - Las etapas anteriores son la única fuente de verdad. Respeta sus decisiones y usa sus ids
   exactos (ROLE-n, FEAT-n, REQ-n, RULE-n, nombres de tablas, EP-n, SCR-n).
 - No agregues funcionalidades fuera del MVP ni omitas ninguna que esté dentro.

@@ -351,6 +351,12 @@ function productSpec(
 
   // ------------------------------------------------------------ Decisiones
   out.push("## 13. Decisiones confirmadas", "");
+  if (p.answeredQuestions.length) {
+    out.push(
+      "Respuestas dadas durante la definición, en orden. Son contexto: si alguna parece distinta de las secciones anteriores, prevalecen las secciones anteriores, que ya integran todas las respuestas.",
+      "",
+    );
+  }
   out.push(
     p.answeredQuestions.length
       ? p.answeredQuestions.map((q) => `- **${q.text}** ${q.answer}`).join("\n")
