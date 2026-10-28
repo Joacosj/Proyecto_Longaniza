@@ -7,6 +7,8 @@ export type {
   ArchitectureArtifact,
   ArchitectureTemplate,
   BackendArtifact,
+  DatabaseArtifact,
+  DefinitionArtifact,
   Field,
   FrontendArtifact,
 } from "../../../backend/src/contracts/artifacts";

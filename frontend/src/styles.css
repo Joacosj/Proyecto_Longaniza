@@ -299,7 +299,7 @@ textarea.json { width: 100%; }
   white-space: nowrap;
 }
 .flag-ok { background: var(--approved); color: #fff; }
-.table-scroll { overflow-x: auto; }
+.table-scroll { overflow-x: auto; position: relative; } /* relative: contiene los .sr-only absolutos de las tablas */
 h4 { font-size: 0.9375rem; margin: 0 0 var(--s2); font-weight: 650; }
 
 .be-table td { vertical-align: top; }
@@ -406,4 +406,42 @@ h4 { font-size: 0.9375rem; margin: 0 0 var(--s2); font-weight: 650; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* ---------------------------------------------------------------- definición y base de datos (B8) */
+.def > *, .db > *, .db .stack > *, .db-entity > *, .def-section > *, .def-scope > *, .def-cards > *, .def-edit > * { min-width: 0; }
+.def textarea, .def input, .db textarea { max-width: 100%; }
+.def-section h3 { margin-bottom: var(--s3); }
+.def-problem { display: grid; gap: var(--s3); margin: 0; }
+.def-problem dt { font-weight: 600; color: var(--graphite); font-size: 0.8125rem; }
+.def-problem dd { margin: 0; }
+.def-cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s3); }
+.def-card { border: 1px solid var(--rule); border-radius: var(--radius); background: #fff; padding: var(--s3); display: grid; gap: var(--s2); align-content: start; }
+.def-card p { margin: 0; }
+.def-card-head { display: flex; align-items: center; gap: var(--s2); }
+.def-card-head input { flex: 1; min-width: 0; }
+.def-edit > .link { justify-self: start; }
+.def-goals { margin: 0; padding-left: 1.1rem; color: var(--graphite); }
+.def-list { margin: 0 0 var(--s2); padding-left: 1.1rem; display: grid; gap: var(--s2); }
+.def-edit { display: grid; gap: var(--s1); }
+.def-scope { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s5); }
+.def-journey { margin: 0; padding-left: 1.4rem; display: grid; gap: var(--s2); }
+.def-table td { vertical-align: top; }
+.def-table textarea { min-width: 14rem; }
+.def-roles { display: grid; gap: 2px; }
+.def-check { display: flex; align-items: center; gap: var(--s1); font-size: 0.875rem; white-space: nowrap; }
+.db-entity { border-top: 1.5px solid var(--ink); padding-top: var(--s3); display: grid; gap: var(--s2); }
+.db-entity p { margin: 0; }
+.db-entity-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.db-entity-head h4 { margin: 0; font-size: 1.0625rem; }
+.db-entity-head .link.danger { margin-left: auto; }
+.db-name { font-weight: 650; max-width: 18rem; }
+.db-table td { vertical-align: middle; }
+.db-table input:not([type="checkbox"]), .db-table select { padding: 0.3rem 0.45rem; font-size: 0.875rem; }
+.db-ref { display: flex; gap: var(--s1); }
+.db-extra { color: var(--graphite); display: grid; gap: var(--s1); }
+.db-checks { margin: 0; padding-left: 1.1rem; display: grid; gap: 2px; }
+@media (max-width: 720px) {
+  .def-scope { grid-template-columns: 1fr; }
+  .db-ref { flex-direction: column; }
 }
