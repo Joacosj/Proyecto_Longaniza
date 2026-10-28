@@ -28,13 +28,18 @@ const config = loadLlmConfig();
 await Deno.mkdir(SALIDA, { recursive: true });
 console.log(`Proyecto: ${ctx.projectName}\n`);
 
-for (const stage of STAGES) {
+// Cada etapa depende de las anteriores: al rehacer se borra todo lo generado, y al generar una
+// etapa se borran las siguientes, para no mezclar resultados de definiciones distintas.
+if (rehacer) await removeFrom(0);
+
+for (const [i, stage] of STAGES.entries()) {
   const file = `${SALIDA}/${stage}.json`;
-  if (!rehacer && await exists(file)) {
+  if (await exists(file)) {
     (ctx.stages as Record<string, unknown>)[stage] = JSON.parse(await Deno.readTextFile(file));
     console.log(`✓ ${NAMES[stage]}: ya generada (${file})`);
     continue;
   }
+  await removeFrom(i + 1);
   console.log(`… ${NAMES[stage]}: generando (puede tardar algunos minutos)`);
   const started = performance.now();
   try {
@@ -106,6 +111,15 @@ async function readJson<T>(path: string): Promise<T | undefined> {
   } catch {
     return undefined;
   }
+}
+
+async function removeFrom(index: number): Promise<void> {
+  const files = [
+    ...STAGES.slice(index).map((st) => `${SALIDA}/${st}.json`),
+    `${SALIDA}/especificacion-producto.md`,
+    `${SALIDA}/arquitectura.md`,
+  ];
+  for (const f of files) await Deno.remove(f).catch(() => {});
 }
 
 async function exists(path: string): Promise<boolean> {
