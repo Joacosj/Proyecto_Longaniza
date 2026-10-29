@@ -182,6 +182,8 @@ function StageView(
         ? (err.details as { blockingQuestions?: { id: string; text: string }[] } | undefined)
           ?.blockingQuestions
         : undefined) ?? [];
+      // Las preguntas nuevas ya quedaron guardadas: recarga el panel para que se vean.
+      if (blocking.length > 0) onSaved();
       setNotice({
         kind: "error",
         text: (

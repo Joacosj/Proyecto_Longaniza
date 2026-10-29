@@ -247,7 +247,24 @@ export function registerStageRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     // La llamada a la IA puede tardar: se hace fuera de la transacción. Si alguien guarda
     // mientras tanto, el guardado de abajo responde 409.
     const context = await buildProjectContext(deps.sql, projectId);
-    const result = await deps.engine.generate({ context, stage: kind as GeneratableStage });
+    let result: Awaited<ReturnType<Engine["generate"]>>;
+    try {
+      result = await deps.engine.generate({ context, stage: kind as GeneratableStage });
+    } catch (e) {
+      // Si la IA no puede proponer porque faltan decisiones, sus preguntas se guardan para
+      // que aparezcan en el panel de Preguntas; si no, el usuario no sabría qué responder.
+      const asked = e instanceof ApiError && e.code === "CONFLICT"
+        ? (e.details as { questions?: unknown } | undefined)?.questions
+        : undefined;
+      if (!Array.isArray(asked) || asked.length === 0) throw e;
+      const saved = await questionsRepo(deps.sql).insertMany(projectId, kind, asked);
+      throw new ApiError("CONFLICT", (e as ApiError).message, {
+        blockingQuestions: saved.filter((q) => q.isBlocking).map((q) => ({
+          id: q.id,
+          text: q.text,
+        })),
+      });
+    }
 
     const saved = await inTransaction(deps.sql, async (tx) => {
       const out = await saveStage(tx, {
