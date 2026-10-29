@@ -374,6 +374,19 @@ export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifac
       }
       return { from: id(n.from, `${p}.from`, "SCR"), to: id(n.to, `${p}.to`, "SCR"), trigger };
     }),
+    ...(o.featuresWithoutScreen === undefined ? {} : {
+      featuresWithoutScreen: arr(
+        o.featuresWithoutScreen ?? [],
+        `${path}.featuresWithoutScreen`,
+        (x, p) => {
+          const f = obj(x, p);
+          return {
+            featureId: id(f.featureId, `${p}.featureId`, "FEAT"),
+            reason: str(f.reason, `${p}.reason`),
+          };
+        },
+      ),
+    }),
   };
 }
 

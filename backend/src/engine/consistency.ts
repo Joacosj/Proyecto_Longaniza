@@ -313,7 +313,15 @@ export function checkConsistency(
       }
     }
     if (def) {
-      for (const f of def.mvp.included) {
+      const outside = new Set((fe.featuresWithoutScreen ?? []).map((f) => f.featureId));
+      for (const id of [...outside].filter((id) => !featureIds.has(id))) {
+        add(
+          "critical",
+          ["definition", "frontend"],
+          `featuresWithoutScreen menciona ${id}, que no es una funcionalidad del MVP.`,
+        );
+      }
+      for (const f of def.mvp.included.filter((f) => !outside.has(f.id))) {
         if (!fe.screens.some((s) => s.featureIds.includes(f.id))) {
           add(
             "critical",

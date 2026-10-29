@@ -80,12 +80,14 @@ while (true) {
       console.log(`No existe la pregunta ${missing.join(", ")}.`);
       continue;
     }
-    const lines: string[] = [];
+    // Se quitan de mayor a menor para no mover los números, pero se guardan en el orden mostrado.
+    const answered: { text: string; answer: string }[] = [];
     for (const a of [...answers].sort((x, y) => y.n - x.n)) {
       const [q] = ctx.openQuestions.splice(a.n - 1, 1);
-      ctx.answeredQuestions.push({ stage: "definition", text: q.text, answer: a.text });
-      lines.unshift(`- "${q.text}" → ${a.text}`);
+      answered.unshift({ text: q.text, answer: a.text });
     }
+    answered.forEach((q) => ctx.answeredQuestions.push({ stage: "definition", ...q }));
+    const lines = answered.map((q) => `- "${q.text}" → ${q.answer}`);
     await turn(`Respondo:\n${lines.join("\n")}`);
   } else {
     await turn(input);

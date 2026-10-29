@@ -302,3 +302,21 @@ Deno.test("detecta rutas de pantalla repetidas o que chocan con la API", () => {
   assert.match(text, /ruta \/app\/login está asignada a más de una pantalla/);
   assert.match(text, /SCR-3 usa la ruta \/rooms/);
 });
+
+Deno.test("una funcionalidad declarada fuera de la interfaz no exige pantalla", () => {
+  const ctx = ejemplo();
+  const fe = ctx.stages.frontend!;
+  const feat = ctx.stages.definition!.mvp.included[3].id;
+  fe.screens.forEach((s) => s.featureIds = s.featureIds.filter((f) => f !== feat));
+  assert.match(
+    checkConsistency(ctx).map((i) => i.description).join("\n"),
+    new RegExp(`${feat} .* no aparece`),
+  );
+  fe.featuresWithoutScreen = [{ featureId: feat, reason: "Se opera con un comando interno." }];
+  assert.doesNotMatch(
+    checkConsistency(ctx).map((i) => i.description).join("\n"),
+    new RegExp(`${feat} .* no aparece`),
+  );
+  fe.featuresWithoutScreen = [{ featureId: "FEAT-99", reason: "x" }];
+  assert.match(checkConsistency(ctx).map((i) => i.description).join("\n"), /FEAT-99, que no es/);
+});

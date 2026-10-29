@@ -283,6 +283,16 @@ function productSpec(
     "",
     `Pantalla inicial: **${fe.entryScreenId} (${screens.get(fe.entryScreenId) ?? "?"})**.`,
     "",
+    ...(fe.featuresWithoutScreen?.length
+      ? [
+        "**Funcionalidades sin pantalla** (se operan fuera de la interfaz; no crear pantallas para ellas):",
+        "",
+        ...fe.featuresWithoutScreen.map((f) =>
+          `- **${f.featureId} (${features.get(f.featureId) ?? "?"}):** ${f.reason}`
+        ),
+      ]
+      : []),
+    "",
     "```mermaid",
     navigationDiagram(fe),
     "```",
@@ -341,6 +351,12 @@ function productSpec(
 
   // ------------------------------------------------------------ Decisiones
   out.push("## 13. Decisiones confirmadas", "");
+  if (p.answeredQuestions.length) {
+    out.push(
+      "Respuestas dadas durante la definición, en orden. Son contexto: si alguna parece distinta de las secciones anteriores, prevalecen las secciones anteriores, que ya integran todas las respuestas.",
+      "",
+    );
+  }
   out.push(
     p.answeredQuestions.length
       ? p.answeredQuestions.map((q) => `- **${q.text}** ${q.answer}`).join("\n")

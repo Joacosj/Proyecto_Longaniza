@@ -146,6 +146,11 @@ export interface FrontendArtifact {
   }[];
   /** Mapa de navegación entre pantallas. */
   navigation: { from: string; to: string; trigger: string }[];
+  /**
+   * Funcionalidades que se operan fuera de la interfaz (comandos de despliegue, herramientas
+   * internas). Cada una explica cómo se usa; sin esto, toda FEAT-n debe estar en una pantalla.
+   */
+  featuresWithoutScreen?: { featureId: string; reason: string }[];
   entryScreenId: string;
 }
 
