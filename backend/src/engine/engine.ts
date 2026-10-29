@@ -45,8 +45,8 @@ export function createEngine(complete: JsonCompleter): Engine {
           if (!turn.artifactDraft) {
             throw new ApiError(
               "CONFLICT",
-              "Todavía hay decisiones bloqueantes: responde las preguntas pendientes antes de " +
-                "generar la definición.",
+              "La IA necesita algunas decisiones antes de proponer la definición. Responde las " +
+                "preguntas del panel Preguntas (o conversa con ella) y vuelve a generar.",
               { questions: turn.newQuestions },
             );
           }
