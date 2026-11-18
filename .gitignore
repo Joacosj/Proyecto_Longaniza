@@ -8,3 +8,6 @@ dist/
 backend/definicion-borrador.json
 backend/definicion-sesion.json
 backend/salida/
+# Claves de Google Cloud (cuentas de servicio)
+secrets/
+*-key.json

@@ -21,15 +21,24 @@ services:
       APP_ENV: development
       PORT: 8000
       DATABASE_URL: postgres://${POSTGRES_USER:-ideator}:${POSTGRES_PASSWORD:-ideator}@db:5432/${POSTGRES_DB:-ideator}
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
-      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-300000}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-600000}
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      GCP_LOCATION: ${GCP_LOCATION:-global}
+      # La clave de la cuenta de servicio se monta desde ./secrets (ver volumes).
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/ideator/gcp-key.json
       USE_FAKE_ENGINE: ${USE_FAKE_ENGINE:-}
       SESSION_SECRET: ${SESSION_SECRET:-dev-only-secret-change-me}
       APP_URL: ${APP_URL:-http://localhost:5173}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - ./secrets:/run/secrets/ideator:ro
     depends_on:
       db:
         condition: service_healthy

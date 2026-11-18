@@ -1,12 +1,12 @@
 /**
  * Prueba de conexión con la IA. Uso (desde backend/): deno task llm:ping
- * Lee LLM_BASE_URL, LLM_API_KEY y LLM_MODEL del archivo .env en la raíz del repositorio.
+ * Lee la configuración de la IA (LLM_*, GCP_*) del archivo .env en la raíz del repositorio.
  */
-import { completeJson, LlmError, loadLlmConfig } from "./llm.ts";
+import { completeJson, LlmError, loadLlmConfig, providerLabel } from "./llm.ts";
 
 try {
   const cfg = loadLlmConfig();
-  console.log(`Conectando a ${cfg.baseUrl} con el deployment "${cfg.model}"...`);
+  console.log(`Conectando a ${providerLabel(cfg)} con el modelo "${cfg.model}"...`);
   const started = performance.now();
   const result = await completeJson(cfg, {
     system: "Eres un asistente de prueba.",
