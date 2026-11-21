@@ -76,8 +76,8 @@ Deno.test("si la respuesta no es válida, pide una corrección y la usa", async 
   assert.match(retryMessages.at(-1).content, /falta ok: true/);
 });
 
-Deno.test("si la corrección también falla, lanza bad_response", async () => {
-  const { fn } = fakeFetch([ok("no es json"), ok("tampoco")]);
+Deno.test("si las correcciones también fallan, lanza bad_response", async () => {
+  const { fn } = fakeFetch([ok("no es json"), ok("tampoco"), ok("menos")]);
   await assert.rejects(
     completeJson(cfg, { system: "", messages: [], validate: validateOk, fetchFn: fn }),
     (e) => e instanceof LlmError && e.kind === "bad_response",

@@ -176,14 +176,16 @@ export async function completeJson<T>(cfg: LlmConfig, opts: CompleteJsonOptions<
     ...opts.messages,
   ];
 
-  // Un intento normal y uno de corrección.
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Un intento normal y hasta dos de corrección: las propuestas grandes (pantallas, API) a
+  // veces necesitan más de una vuelta para quedar coherentes con las etapas anteriores.
+  const attempts = 3;
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const content = await chat(cfg, doFetch, messages, opts.temperature);
     try {
       return opts.validate(parseJson(content));
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
-      if (attempt === 1) {
+      if (attempt === attempts - 1) {
         throw new LlmError("bad_response", `La IA devolvió una respuesta inválida: ${reason}`);
       }
       messages.push(
