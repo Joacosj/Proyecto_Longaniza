@@ -1,5 +1,5 @@
 /**
- * Conversación de prueba con la etapa 1 de Ideator, usando la IA real (Foundry).
+ * Conversación de prueba con la etapa 1 de Ideator, usando la IA real (Google Cloud).
  * Uso (desde backend/): deno task conversar
  *
  * Comandos durante la conversación:

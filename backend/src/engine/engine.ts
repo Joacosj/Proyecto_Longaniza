@@ -68,7 +68,7 @@ export function createEngine(complete: JsonCompleter): Engine {
   };
 }
 
-/** Motor conectado a Microsoft Foundry según las variables LLM_* del entorno. */
+/** Motor conectado a la IA configurada en el entorno (Google Cloud por defecto; ver llm.ts). */
 export function createEngineFromEnv(config: LlmConfig = loadLlmConfig()): Engine {
   return createEngine((opts) => completeJson(config, opts));
 }

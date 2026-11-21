@@ -32,7 +32,7 @@ const validateOk = (v: unknown) => {
   return v as { ok: true };
 };
 
-Deno.test("envía la petición en el formato de Foundry y devuelve el JSON validado", async () => {
+Deno.test("foundry: envía la petición con el encabezado api-key y devuelve el JSON validado", async () => {
   const { fn, calls } = fakeFetch([ok('{"ok": true}')]);
   const result = await completeJson(cfg, {
     system: "sistema",

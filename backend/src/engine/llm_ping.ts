@@ -6,6 +6,13 @@ import { completeJson, LlmError, loadLlmConfig, providerLabel } from "./llm.ts";
 
 try {
   const cfg = loadLlmConfig();
+  if (cfg.provider === "foundry") {
+    console.warn(
+      "Aviso: el .env apunta a Microsoft Foundry, que ya no está disponible. Para Google Cloud, " +
+        "completa GCP_PROJECT_ID y GOOGLE_APPLICATION_CREDENTIALS y borra LLM_BASE_URL y " +
+        "LLM_API_KEY (ver docs/google-cloud.md).",
+    );
+  }
   console.log(`Conectando a ${providerLabel(cfg)} con el modelo "${cfg.model}"...`);
   const started = performance.now();
   const result = await completeJson(cfg, {
