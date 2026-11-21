@@ -147,8 +147,9 @@ Forma de "artifact":
     "states": { "empty": "", "loading": "", "error": "" }
   }],
   "navigation": [{ "from": "SCR-1", "to": "SCR-2", "trigger": "" }],
-  "featuresWithoutScreen": []
+  "featuresWithoutScreen": [{ "featureId": "FEAT-5", "reason": "cómo se opera, en una frase" }]
 }
+(featuresWithoutScreen va vacío [] si todas las funcionalidades tienen pantalla.)
 `.trim();
 
 const ARCHITECTURE = `
