@@ -2,7 +2,8 @@ import { type FormEvent, useState } from "react";
 import { client } from "../api";
 import { navigate, paths } from "../router";
 import { STAGE_LABEL, STAGE_ORDER } from "../types";
-import { errorText, formatDate, Loading, Notice, RoleTag, useLoad } from "../ui";
+import type { Project } from "../types";
+import { ConfirmDialog, errorText, formatDate, Loading, Notice, RoleTag, useLoad } from "../ui";
 
 const STATUS_LABEL = {
   in_progress: "En curso",
@@ -11,13 +12,17 @@ const STATUS_LABEL = {
 };
 
 export function ProjectsPage() {
-  const { data, error, loading } = useLoad(() => client.projects.list(), []);
+  const { data, error, loading, reload } = useLoad(() => client.projects.list(), []);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Project | null>(null);
 
   return (
     <main className="page">
       <div className="page-head">
-        <h1>Tus proyectos</h1>
+        <div>
+          <p className="eyebrow">Laboratorio de ideas</p>
+          <h1>Tus proyectos</h1>
+        </div>
         {!creating && (
           <button type="button" className="primary" onClick={() => setCreating(true)}>
             Nuevo proyecto
@@ -39,27 +44,65 @@ export function ProjectsPage() {
       )}
 
       {data && data.projects.length > 0 && (
-        <ul className="project-list">
+        <ul className="project-grid">
           {data.projects.map((p) => {
             const step = STAGE_ORDER.indexOf(p.currentStage) + 1;
+            const finished = p.status !== "in_progress";
             return (
-              <li key={p.id}>
-                <a href={paths.stage(p.id)} className="project-row">
+              <li key={p.id} className="project-card">
+                <a href={paths.stage(p.id)} className="project-link">
                   <span className="project-name">{p.name}</span>
-                  <span className="project-meta">
-                    <RoleTag role={p.role} />
-                    <span>
-                      {p.status === "in_progress"
-                        ? `Etapa ${step} de 6: ${STAGE_LABEL[p.currentStage]}`
-                        : STATUS_LABEL[p.status]}
-                    </span>
-                    <span className="muted">Actualizado {formatDate(p.updatedAt)}</span>
+                  <span className="small">
+                    {finished
+                      ? STATUS_LABEL[p.status]
+                      : `Etapa ${step} de 6 · ${STAGE_LABEL[p.currentStage]}`}
                   </span>
+                  <span className="muted small">Actualizado {formatDate(p.updatedAt)}</span>
                 </a>
+                <span className="progress" aria-hidden="true">
+                  {STAGE_ORDER.map((k, i) => (
+                    <span
+                      key={k}
+                      className={finished || i < step - 1 ? "done" : i === step - 1 ? "current" : ""}
+                    />
+                  ))}
+                </span>
+                <span className="card-actions">
+                  <RoleTag role={p.role} />
+                  {p.role === "owner" && (
+                    <button
+                      type="button"
+                      className="link danger"
+                      aria-label={`Eliminar el proyecto ${p.name}`}
+                      onClick={() => setDeleting(p)}
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                </span>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {deleting && (
+        <ConfirmDialog
+          title="Eliminar proyecto"
+          confirmText={deleting.name}
+          actionLabel="Eliminar definitivamente"
+          onClose={() => setDeleting(null)}
+          onConfirm={async () => {
+            await client.projects.remove(deleting.id);
+            setDeleting(null);
+            await reload();
+          }}
+        >
+          <p>
+            Se borran sus etapas, conversaciones, preguntas y documentos para todos los miembros.
+            No se puede deshacer.
+          </p>
+        </ConfirmDialog>
       )}
     </main>
   );

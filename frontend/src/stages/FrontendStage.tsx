@@ -19,7 +19,7 @@ export function navigationDiagram(artifact: FrontendArtifact): string {
   }
   if (artifact.entryScreenId) {
     lines.push(`  inicio(( )) --> ${node(artifact.entryScreenId)}`);
-    lines.push("  style inicio fill:#1d2b3a,stroke:#1d2b3a");
+    lines.push("  style inicio fill:#5ee7ff,stroke:#5ee7ff");
     lines.push(`  style ${node(artifact.entryScreenId)} stroke-width:3px`);
   }
   return lines.join("\n");

@@ -237,6 +237,11 @@ function StageView(
         )}
       </header>
 
+      {busy === "generate" && (
+        <p className="thinking" role="status">
+          la IA está diseñando esta etapa con todo lo aprobado antes; puede tardar unos minutos
+        </p>
+      )}
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}
       {stage.status === "locked" && (
         <Notice kind="info">Esta etapa se desbloquea cuando se aprueba la anterior.</Notice>

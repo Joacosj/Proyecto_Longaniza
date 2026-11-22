@@ -88,6 +88,9 @@ export function ChatPanel(
             <p>{m.content}</p>
           </li>
         ))}
+        {busy && (
+          <li className="thinking" role="status">la IA está pensando</li>
+        )}
         <div ref={endRef} />
       </ol>
 

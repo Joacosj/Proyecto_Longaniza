@@ -36,6 +36,11 @@ function AuthFrame({ title, children }: { title: string; children: React.ReactNo
           De una idea suelta a dos documentos que otra IA puede implementar, en seis etapas
           revisadas por tu equipo.
         </p>
+        <p className="typed" aria-hidden="true">
+          <span>idea → preguntas bloqueantes</span>
+          <span>datos → api → pantallas → arquitectura</span>
+          <span>✓ especificación lista para implementar</span>
+        </p>
       </div>
       <section className="auth-form">
         <h1>{title}</h1>

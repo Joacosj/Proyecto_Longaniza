@@ -3,7 +3,7 @@ import { client } from "../api";
 import { useAuth } from "../auth";
 import { navigate, paths } from "../router";
 import { type Project, type ProjectRole, ROLE_LABEL } from "../types";
-import { errorText, formatDate, Loading, Notice, RoleTag, useLoad } from "../ui";
+import { ConfirmDialog, errorText, formatDate, Loading, Notice, RoleTag, useLoad } from "../ui";
 
 export function MembersTab({ project, onProjectChange }: { project: Project; onProjectChange: () => void }) {
   const { user } = useAuth();
@@ -182,15 +182,7 @@ function ProjectSettings({ project, onSaved }: { project: Project; onSaved: () =
     }
   }
 
-  async function remove() {
-    if (!confirm(`¿Eliminar "${project.name}"? Se borran sus etapas, conversaciones y documentos.`)) return;
-    try {
-      await client.projects.remove(project.id);
-      navigate(paths.projects());
-    } catch (err) {
-      setError(err);
-    }
-  }
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <form className="panel stack" onSubmit={save}>
@@ -207,8 +199,27 @@ function ProjectSettings({ project, onSaved }: { project: Project; onSaved: () =
       </label>
       <div className="row">
         <button type="submit">Guardar cambios</button>
-        <button type="button" className="danger" onClick={remove}>Eliminar proyecto</button>
+        <button type="button" className="danger" onClick={() => setDeleting(true)}>
+          Eliminar proyecto
+        </button>
       </div>
+      {deleting && (
+        <ConfirmDialog
+          title="Eliminar proyecto"
+          confirmText={project.name}
+          actionLabel="Eliminar definitivamente"
+          onClose={() => setDeleting(false)}
+          onConfirm={async () => {
+            await client.projects.remove(project.id);
+            navigate(paths.projects());
+          }}
+        >
+          <p>
+            Se borran sus etapas, conversaciones, preguntas y documentos para todos los miembros.
+            No se puede deshacer.
+          </p>
+        </ConfirmDialog>
+      )}
     </form>
   );
 }
