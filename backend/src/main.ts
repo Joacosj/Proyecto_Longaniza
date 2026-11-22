@@ -3,6 +3,7 @@ import { loadConfig } from "./config.ts";
 import { createSql } from "./db/client.ts";
 import { createFakeEngine } from "./engine/fake.ts";
 import { createEngineFromEnv } from "./engine/engine.ts";
+import { loadLlmConfig, providerLabel } from "./engine/llm.ts";
 import type { Engine } from "./engine/types.ts";
 import { googleProvider, type SsoProvider } from "./auth/sso.ts";
 
@@ -13,9 +14,9 @@ const sql = createSql(config.databaseUrl);
 function pickEngine(): Engine {
   if (Deno.env.get("USE_FAKE_ENGINE") === "1") return createFakeEngine();
   try {
-    const engine = createEngineFromEnv();
-    console.log("Motor: IA real (Microsoft Foundry)");
-    return engine;
+    const llm = loadLlmConfig();
+    console.log(`Motor: IA real (${providerLabel(llm)}, modelo ${llm.model})`);
+    return createEngineFromEnv(llm);
   } catch (e) {
     console.warn(`Motor: falso (${(e as Error).message})`);
     return createFakeEngine();

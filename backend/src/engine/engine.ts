@@ -68,14 +68,14 @@ export function createEngine(complete: JsonCompleter): Engine {
   };
 }
 
-/** Motor conectado a Microsoft Foundry según las variables LLM_* del entorno. */
+/** Motor conectado a la IA configurada en el entorno (Google Cloud por defecto; ver llm.ts). */
 export function createEngineFromEnv(config: LlmConfig = loadLlmConfig()): Engine {
   return createEngine((opts) => completeJson(config, opts));
 }
 
 const FRIENDLY: Record<LlmError["kind"], string> = {
   config: "La IA no está bien configurada",
-  auth: "La API key de la IA no es válida",
+  auth: "Las credenciales de la IA no son válidas o no tienen acceso",
   rate_limit: "Se alcanzó el límite de uso de la IA; intenta en unos minutos",
   timeout: "La IA tardó demasiado en responder; intenta de nuevo",
   network: "No se pudo conectar con la IA",
@@ -89,7 +89,14 @@ async function withFriendlyErrors<T>(fn: () => Promise<T>): Promise<T> {
   } catch (e) {
     if (e instanceof LlmError) {
       console.error(`[motor] ${e.kind}: ${e.message}`);
-      throw new ApiError("INTERNAL", `${FRIENDLY[e.kind]}.`, { reason: e.kind });
+      // Para respuestas inválidas se muestra el motivo: ayuda a decidir si reintentar o ajustar
+      // una etapa anterior. No contiene datos sensibles (son mensajes del validador).
+      const detail = e.kind === "bad_response"
+        ? ` Motivo: ${
+          e.message.replace(/^La IA devolvió una respuesta inválida: /, "").slice(0, 300)
+        }`
+        : "";
+      throw new ApiError("INTERNAL", `${FRIENDLY[e.kind]}.${detail}`, { reason: e.kind });
     }
     throw e;
   }

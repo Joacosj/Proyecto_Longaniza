@@ -23,6 +23,9 @@ docker compose up --build
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000/api/health
 - Las migraciones se aplican solas al iniciar el backend.
+- La IA usa Google Cloud Vertex AI: sigue [docs/google-cloud.md](docs/google-cloud.md) para
+  crear la cuenta de servicio y completar el `.env`. Sin esa configuración, la app arranca con
+  un motor falso de ejemplo.
 
 ### Sin Docker
 
