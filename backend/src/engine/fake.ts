@@ -14,6 +14,7 @@ import { listArchitectures } from "./architectures.ts";
 import { checkConsistency } from "./consistency.ts";
 import { renderDocuments } from "./documents.ts";
 import { ejemplo } from "./ejemplo.ts";
+import { sketchScreen } from "./visual.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
 export function createFakeEngine(): Engine {
@@ -41,6 +42,12 @@ export function createFakeEngine(): Engine {
         stage: inconsistency.stages.at(-1) ?? null,
         explanation: "(motor falso) Resolver con IA necesita el motor real.",
       }),
+    auditSemantics: () => Promise.resolve([]),
+    reviewDocuments: () => Promise.resolve([]),
+    designScreen: ({ context, screenId }) => {
+      if (!context.stages.frontend) return Promise.reject(new Error("No hay pantallas"));
+      return Promise.resolve({ html: sketchScreen(context.stages.frontend, screenId) });
+    },
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),
     listArchitectures,

@@ -16,6 +16,8 @@ import { converseDefinition, type JsonCompleter } from "./definition.ts";
 import { renderDocuments } from "./documents.ts";
 import { generateStage } from "./generate.ts";
 import { resolveInconsistency } from "./resolve.ts";
+import { auditSemantics, reviewDocuments } from "./ia_revision.ts";
+import { designScreen } from "./visual.ts";
 import { completeJson, type LlmConfig, LlmError, loadLlmConfig } from "./llm.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
@@ -65,6 +67,9 @@ export function createEngine(complete: JsonCompleter): Engine {
 
     resolveInconsistency: (input) =>
       withFriendlyErrors(() => resolveInconsistency(complete, input)),
+    auditSemantics: (context) => withFriendlyErrors(() => auditSemantics(complete, context)),
+    reviewDocuments: (context) => withFriendlyErrors(() => reviewDocuments(complete, context)),
+    designScreen: (input) => withFriendlyErrors(() => designScreen(complete, input)),
 
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),

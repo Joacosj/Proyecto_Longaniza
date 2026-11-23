@@ -12,6 +12,7 @@ import { questionsRepo } from "../repositories/questions.ts";
 import { stagesRepo } from "../repositories/stages.ts";
 import { inTransaction } from "../repositories/tx.ts";
 import { describeChanges } from "../engine/resolve.ts";
+import { runAgent } from "../agents/tracker.ts";
 import type { Inconsistency as Found } from "../engine/types.ts";
 import type { StageDeps } from "./stages.ts";
 
@@ -126,7 +127,15 @@ export function registerReviewRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
       const projectId = c.get("projectId");
       const inc = await findOpenInconsistency(deps.sql, projectId, c.req.param("incId"));
       const context = await buildProjectContext(deps.sql, projectId);
-      const result = await deps.engine.resolveInconsistency({ context, inconsistency: inc });
+      const result = await runAgent(
+        projectId,
+        {
+          agent: "resolvedor",
+          task: "Buscando cómo resolver una inconsistencia",
+          userName: c.get("user").name,
+        },
+        () => deps.engine.resolveInconsistency({ context, inconsistency: inc }),
+      );
       if (result.kind === "manual") return c.json({ resolution: result });
 
       const stage = await stagesRepo(deps.sql).get(projectId, result.stage);
@@ -218,6 +227,8 @@ export function registerReviewRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
         }
         await stages.syncProjectProgress(projectId);
         const synced = await inconsistenciesRepo(tx).sync(projectId, after);
+        // Los hallazgos del Auditor no los reporta el validador: se cierran explícitamente.
+        if (inc.source === "auditor") await inconsistenciesRepo(tx).resolve(inc.id, userId);
         await auditRepo(tx).log({
           projectId,
           userId,
@@ -225,6 +236,7 @@ export function registerReviewRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
           entityType: "stage",
           entityId: kind!,
           detail: {
+            agent: "resolvedor",
             version,
             approved: wasApproved,
             inconsistency: inc.description,

@@ -10,6 +10,8 @@ import { messagesRepo } from "../repositories/messages.ts";
 import { type Question, questionsRepo } from "../repositories/questions.ts";
 import { isStageKind, stagesRepo } from "../repositories/stages.ts";
 import { inTransaction } from "../repositories/tx.ts";
+import { runAgent } from "../agents/tracker.ts";
+import { STAGE_AGENT } from "../engine/agents.ts";
 import type { StageDeps } from "./stages.ts";
 
 export const MAX_MESSAGE = 10_000;
@@ -62,7 +64,11 @@ export function registerDialogRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     });
 
     const context = await buildProjectContext(deps.sql, projectId);
-    const result = await deps.engine.converse({ context, stage, history, userMessage: content });
+    const result = await runAgent(
+      projectId,
+      { agent: STAGE_AGENT[stage], task: "Respondiendo en la conversación", userName: user.name },
+      () => deps.engine.converse({ context, stage, history, userMessage: content }),
+    );
 
     const saved = await inTransaction(deps.sql, async (tx) => {
       const reply = await messagesRepo(tx).add({

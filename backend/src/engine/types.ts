@@ -86,6 +86,20 @@ export interface Engine {
     | { kind: "manual"; stage: StageKind | null; explanation: string }
   >;
 
+  /** Auditor semántico: problemas de significado que el validador en código no ve. */
+  auditSemantics(context: ProjectContext): Promise<Inconsistency[]>;
+
+  /**
+   * Revisor externo: lee los documentos finales como la IA implementadora y devuelve las
+   * decisiones que tendría que inventar, como preguntas para la etapa donde se resuelven.
+   */
+  reviewDocuments(context: ProjectContext): Promise<
+    { stage: Exclude<StageKind, "review">; question: string; rationale: string }[]
+  >;
+
+  /** Diseñador visual: HTML autocontenido y seguro que muestra cómo se vería una pantalla. */
+  designScreen(input: { context: ProjectContext; screenId: string }): Promise<{ html: string }>;
+
   /** Revisa una etapa o todo el proyecto. Determinista: no llama a la IA. */
   checkConsistency(context: ProjectContext): Inconsistency[];
 

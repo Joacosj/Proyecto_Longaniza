@@ -33,6 +33,7 @@ const app = createApp({
   sql,
   sessionSecret: config.sessionSecret,
   secureCookies: config.env === "production",
+  production: config.env === "production",
   sso,
   appUrl: config.appUrl,
   engine: pickEngine(),

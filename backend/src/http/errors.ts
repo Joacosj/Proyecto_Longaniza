@@ -12,15 +12,19 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "VALIDATION_ERROR"
+  | "PAYLOAD_TOO_LARGE"
+  | "RATE_LIMITED"
   | "INTERNAL";
 
-const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 422 | 500> = {
+const STATUS: Record<ErrorCode, 400 | 401 | 403 | 404 | 409 | 413 | 422 | 429 | 500> = {
   BAD_REQUEST: 400,
   UNAUTHENTICATED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
   VALIDATION_ERROR: 422,
+  PAYLOAD_TOO_LARGE: 413,
+  RATE_LIMITED: 429,
   INTERNAL: 500,
 };
 

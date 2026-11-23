@@ -17,6 +17,8 @@ import {
   stagesRepo,
 } from "../repositories/stages.ts";
 import { inTransaction } from "../repositories/tx.ts";
+import { runAgent } from "../agents/tracker.ts";
+import { type AgentId, STAGE_AGENT } from "../engine/agents.ts";
 
 export type StageDeps = AuthDeps & { engine: Engine };
 
@@ -65,6 +67,8 @@ async function saveStage(tx: Sql, input: {
   artifact: Record<string, unknown>;
   source: "ai" | "user";
   userId: string;
+  /** Agente de IA que produjo el artefacto, para la auditoría. */
+  agent?: AgentId;
 }): Promise<{ stage: Stage; reopened: StageKind[] }> {
   const stages = stagesRepo(tx);
   const stage = await stages.get(input.projectId, input.kind);
@@ -104,6 +108,7 @@ async function saveStage(tx: Sql, input: {
     detail: {
       version: saved.version,
       reopened: saved.wasApproved ? [input.kind, ...reopened] : [],
+      ...(input.agent ? { agent: input.agent } : {}),
     },
   });
 
@@ -249,7 +254,12 @@ export function registerStageRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     const context = await buildProjectContext(deps.sql, projectId);
     let result: Awaited<ReturnType<Engine["generate"]>>;
     try {
-      result = await deps.engine.generate({ context, stage: kind as GeneratableStage });
+      const agent = STAGE_AGENT[kind as GeneratableStage];
+      result = await runAgent(
+        projectId,
+        { agent, task: `Generando la etapa ${kind}`, userName: c.get("user").name },
+        () => deps.engine.generate({ context, stage: kind as GeneratableStage }),
+      );
     } catch (e) {
       // Si la IA no puede proponer porque faltan decisiones, sus preguntas se guardan para
       // que aparezcan en el panel de Preguntas; si no, el usuario no sabría qué responder.
@@ -274,6 +284,7 @@ export function registerStageRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
         artifact: result.artifact as unknown as Record<string, unknown>,
         source: "ai",
         userId: c.get("user").id,
+        agent: STAGE_AGENT[kind as GeneratableStage],
       });
       const questions = await questionsRepo(tx).insertMany(projectId, kind, result.questions);
       return { stage: out.stage, questions };

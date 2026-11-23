@@ -8,6 +8,7 @@
 import type { ArchitectureTemplate, StageKind } from "../../contracts/artifacts.ts";
 import { STAGE_ORDER } from "../../contracts/artifacts.ts";
 import type { GeneratableStage, ProjectContext } from "../types.ts";
+import { PATRONES_INTERFAZ } from "../skills/patrones_interfaz.ts";
 
 const COMMON = `
 Eres el arquitecto de software de Ideator. Ideator convierte una idea en una especificación que
@@ -186,7 +187,7 @@ Forma de "artifact":
 const BY_STAGE: Record<Exclude<GeneratableStage, "definition">, string> = {
   database: DATABASE,
   backend: BACKEND,
-  frontend: FRONTEND,
+  frontend: `${FRONTEND}\n\n${PATRONES_INTERFAZ}`,
   architecture: ARCHITECTURE,
 };
 
