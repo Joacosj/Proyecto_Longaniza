@@ -18,6 +18,8 @@ import type {
   StageVersion,
   User,
   Resolution,
+  AgentStatus,
+  ScreenPreview,
 } from "./types";
 
 export class ApiError extends Error {
@@ -144,6 +146,20 @@ export const client = {
       api<{ question: Question }>(`${p(id)}/questions/${questionId}`, json("PATCH", { answer })),
     setQuestionStatus: (id: string, questionId: string, status: "deferred" | "open") =>
       api<{ question: Question }>(`${p(id)}/questions/${questionId}`, json("PATCH", { status })),
+  },
+
+  agents: {
+    status: (id: string) => api<{ agents: AgentStatus[] }>(`${p(id)}/agents`),
+    semanticAudit: (id: string) =>
+      api<{ found: number; added: number; inconsistencies: Inconsistency[] }>(
+        `${p(id)}/semantic-audit`,
+        json("POST"),
+      ),
+    externalReview: (id: string) =>
+      api<{ questions: Question[] }>(`${p(id)}/external-review`, json("POST")),
+    previews: (id: string) => api<{ previews: ScreenPreview[] }>(`${p(id)}/screen-previews`),
+    preview: (id: string, screenId: string) =>
+      api<{ preview: ScreenPreview }>(`${p(id)}/screens/${screenId}/preview`, json("POST")),
   },
 
   review: {

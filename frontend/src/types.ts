@@ -122,6 +122,8 @@ export interface Question {
 }
 
 export interface Inconsistency {
+  /** validator: validador en código. auditor: Auditor semántico (IA). */
+  source?: "validator" | "auditor";
   id: string;
   stages: StageKind[];
   description: string;
@@ -191,3 +193,53 @@ export type Resolution =
     changes: string[];
   }
   | { kind: "manual"; stage: StageKind | null; explanation: string };
+
+export type AgentId =
+  | "entrevistador"
+  | "arquitecto-datos"
+  | "disenador-api"
+  | "disenador-interfaz"
+  | "arquitecto-soluciones"
+  | "disenador-visual"
+  | "auditor"
+  | "resolvedor"
+  | "revisor";
+
+export interface AgentStatus {
+  id: AgentId;
+  name: string;
+  role: string;
+  stage: StageKind | null;
+  skills: string[];
+  tools: string[];
+  working: { task: string; userName: string; startedAt: string }[];
+  lastAction: { action: string; entityId: string | null; createdAt: string; userName: string | null } | null;
+}
+
+/** Nombre del agente que trabaja cada etapa (igual que en el backend). */
+export const STAGE_AGENT_NAME: Record<Exclude<StageKind, "review">, string> = {
+  definition: "Entrevistador",
+  database: "Arquitecto de datos",
+  backend: "Diseñador de API",
+  frontend: "Diseñador de interfaz",
+  architecture: "Arquitecto de soluciones",
+};
+
+export const AGENT_NAME: Record<AgentId, string> = {
+  entrevistador: "Entrevistador",
+  "arquitecto-datos": "Arquitecto de datos",
+  "disenador-api": "Diseñador de API",
+  "disenador-interfaz": "Diseñador de interfaz",
+  "arquitecto-soluciones": "Arquitecto de soluciones",
+  "disenador-visual": "Diseñador visual",
+  auditor: "Auditor semántico",
+  resolvedor: "Resolvedor",
+  revisor: "Revisor externo",
+};
+
+export interface ScreenPreview {
+  screenId: string;
+  html: string;
+  createdAt: string;
+  createdBy: string | null;
+}

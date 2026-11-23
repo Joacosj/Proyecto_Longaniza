@@ -9,8 +9,7 @@ import {
   STAGE_LABEL,
   STAGE_ORDER,
   type StageKind,
-  type StageSummary,
-} from "../types";
+  type StageSummary, STAGE_AGENT_NAME } from "../types";
 import { errorText, formatDate, Loading, Notice, useLoad } from "../ui";
 import { ChatPanel } from "./ChatPanel";
 import { QuestionsPanel } from "./QuestionsPanel";
@@ -239,7 +238,8 @@ function StageView(
 
       {busy === "generate" && (
         <p className="thinking" role="status">
-          la IA está diseñando esta etapa con todo lo aprobado antes; puede tardar unos minutos
+          el agente {STAGE_AGENT_NAME[kind as Exclude<StageKind, "review">]} está trabajando en
+          esta etapa con todo lo aprobado antes; puede tardar unos minutos
         </p>
       )}
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}

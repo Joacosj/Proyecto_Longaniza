@@ -2,6 +2,7 @@ import { client } from "../api";
 import { paths, type Route } from "../router";
 import { errorText, Loading, Notice, RoleTag, useLoad } from "../ui";
 import { ActivityTab } from "./ActivityTab";
+import { AgentsTab } from "./AgentsTab";
 import { MembersTab } from "./MembersTab";
 import { ReviewTab } from "./ReviewTab";
 import { StagesTab } from "./StagesTab";
@@ -10,6 +11,7 @@ type ProjectRoute = Extract<Route, { name: "project" }>;
 
 const TABS: { key: ProjectRoute["tab"]; label: string; href: (id: string) => string }[] = [
   { key: "stages", label: "Etapas", href: (id) => paths.stage(id) },
+  { key: "agents", label: "Agentes", href: paths.agents },
   { key: "members", label: "Miembros", href: paths.members },
   { key: "review", label: "Revisión final", href: paths.review },
   { key: "activity", label: "Actividad", href: paths.activity },
@@ -53,6 +55,7 @@ export function ProjectPage({ route }: { route: ProjectRoute }) {
       {route.tab === "stages" && (
         <StagesTab project={project} selected={route.stage} onProjectChange={reload} />
       )}
+      {route.tab === "agents" && <AgentsTab project={project} />}
       {route.tab === "members" && <MembersTab project={project} onProjectChange={reload} />}
       {route.tab === "review" && <ReviewTab project={project} onProjectChange={reload} />}
       {route.tab === "activity" && <ActivityTab project={project} />}

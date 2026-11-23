@@ -122,7 +122,13 @@ export function DatabaseStage({ artifact, editable, onChange }: StageComponentPr
         <h3>Diagrama entidad-relación</h3>
         {entities.length === 0
           ? <p className="muted">La etapa no define tablas todavía.</p>
-          : <Mermaid code={erDiagram(artifact)} label="Diagrama entidad-relación del modelo de datos" />}
+          : (
+            <Mermaid
+              code={erDiagram(artifact)}
+              label="Diagrama entidad-relación del modelo de datos"
+              targets={new Map(entities.map((e, i) => [mid(e.name), `entity-${i}`]))}
+            />
+          )}
       </section>
 
       <section className="stack">
@@ -130,7 +136,7 @@ export function DatabaseStage({ artifact, editable, onChange }: StageComponentPr
           Tablas <span className="muted small">· {entities.length}</span>
         </h3>
         {entities.map((e, i) => (
-          <article key={i} className="db-entity">
+          <article key={i} id={`entity-${i}`} className="db-entity">
             <header className="db-entity-head">
               {editable
                 ? (

@@ -15,7 +15,7 @@ const DOC_LABEL = { product_spec: "Especificación del producto", architecture: 
 
 export function ReviewTab({ project, onProjectChange }: { project: Project; onProjectChange: () => void }) {
   const { data, error, reload } = useLoad(() => client.review.get(project.id), [project.id]);
-  const [busy, setBusy] = useState<null | "check" | "docs">(null);
+  const [busy, setBusy] = useState<null | "check" | "docs" | "audit" | "external">(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "error" | "info"; text: string } | null>(null);
   const [blockedBy, setBlockedBy] = useState<Pending | null>(null);
   const canEdit = project.role !== "viewer";
@@ -39,6 +39,35 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
           : `El validador encontró ${out.inconsistencies.length} inconsistencia(s) abiertas.`,
       });
       setBlockedBy(null);
+      await reload();
+    } catch (err) {
+      setNotice({ kind: "error", text: errorText(err) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runAgent(kind: "audit" | "external") {
+    setBusy(kind);
+    setNotice(null);
+    try {
+      if (kind === "audit") {
+        const out = await client.agents.semanticAudit(project.id);
+        setNotice({
+          kind: "info",
+          text: out.found === 0
+            ? "El Auditor semántico no encontró problemas de significado entre etapas."
+            : `El Auditor semántico encontró ${out.found} problema(s); ${out.added} nuevo(s) en la lista de inconsistencias.`,
+        });
+      } else {
+        const out = await client.agents.externalReview(project.id);
+        setNotice({
+          kind: "info",
+          text: out.questions.length === 0
+            ? "El Revisor externo no tendría que inventar nada para implementar el producto."
+            : `El Revisor externo dejó ${out.questions.length} pregunta(s) en las etapas correspondientes (panel Preguntas).`,
+        });
+      }
       await reload();
     } catch (err) {
       setNotice({ kind: "error", text: errorText(err) });
@@ -81,6 +110,29 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
   return (
     <div className="review">
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}
+
+      {canEdit && (
+        <section className="agent-actions">
+          <div>
+            <p className="eyebrow">Agentes de revisión</p>
+            <p className="muted small">
+              El Auditor revisa reglas, permisos y casos borde que el validador en código no ve. El
+              Revisor externo lee los documentos como la IA que implementará el producto y deja
+              preguntas por lo que tendría que inventar.
+            </p>
+          </div>
+          <div className="row">
+            <button type="button" onClick={() => runAgent("audit")} disabled={!!busy}>
+              {busy === "audit" ? "Auditando…" : "⚙ Auditor semántico"}
+            </button>
+            <button type="button" onClick={() => runAgent("external")} disabled={!!busy}>
+              {busy === "external" ? "Leyendo documentos…" : "⚙ Revisor externo"}
+            </button>
+          </div>
+          {busy === "audit" && <p className="thinking">el Auditor semántico está revisando el proyecto</p>}
+          {busy === "external" && <p className="thinking">el Revisor externo está leyendo los documentos</p>}
+        </section>
+      )}
 
       <section className="stack">
         <div className="page-head">
@@ -248,13 +300,14 @@ function InconsistencyItem(
   return (
     <li className={`inc is-${inc.severity}`}>
       <span className="flag">{inc.severity === "critical" ? "Crítica" : "Advertencia"}</span>
+      {inc.source === "auditor" && <span className="agent-chip">⚙ Auditor semántico</span>}
       <p>{inc.description}</p>
       <p className="muted">{inc.stages.map((s) => STAGE_LABEL[s]).join(", ")}</p>
 
       {canEdit && !proposal && (
         <div className="row">
           <button type="button" className="primary" onClick={propose} disabled={!!busy}>
-            {busy === "propose" ? "Buscando solución…" : "Resolver con IA"}
+            {busy === "propose" ? "Buscando solución…" : "⚙ Resolver con IA"}
           </button>
           <button type="button" className="link" onClick={onMarkResolved} disabled={!!busy}>
             Marcar como resuelta
@@ -262,7 +315,7 @@ function InconsistencyItem(
         </div>
       )}
       {busy === "propose" && (
-        <p className="thinking" role="status">la IA está buscando el cambio mínimo que lo resuelve</p>
+        <p className="thinking" role="status">el Resolvedor está buscando el cambio mínimo que lo resuelve</p>
       )}
       {error ? <Notice onClose={() => setError(null)}>{errorText(error)}</Notice> : null}
 
