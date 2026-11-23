@@ -22,6 +22,8 @@ function describe(e: AuditEntry): string {
     case "question.reopened": return "reabrió una pregunta";
     case "consistency.checked": return "revisó la consistencia entre etapas";
     case "inconsistency.resolved": return "marcó una inconsistencia como resuelta";
+    case "inconsistency.ai_resolved":
+      return `resolvió una inconsistencia con la IA en ${stage}${d.approved ? " y la aprobó" : ""}`;
     case "documents.generated": return `generó los documentos (versión ${d.version})`;
     default: return e.action;
   }

@@ -681,3 +681,19 @@ dialog.confirm h2 { color: var(--error); }
   border: 0; border-radius: 0; border-bottom: 3px solid transparent; background: none; box-shadow: none;
 }
 .side-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); }
+
+/* ---------------------------------------------------------------- resolver con IA */
+.inc .row { margin-top: var(--s2); }
+.resolution {
+  margin-top: var(--s3); padding: var(--s4); border-radius: 12px;
+  border: 1px solid rgba(94, 231, 255, 0.35);
+  background: linear-gradient(180deg, rgba(94, 231, 255, 0.07), rgba(180, 140, 255, 0.05));
+  box-shadow: var(--glow);
+  display: grid; gap: var(--s2);
+}
+.resolution p { margin: 0; }
+.resolution.is-manual { border-color: rgba(255, 216, 77, 0.4); background: var(--highlight-soft); box-shadow: none; }
+.resolution.is-manual .eyebrow { color: var(--highlight); }
+.resolution-changes { margin: 0; padding-left: 1.1rem; font-family: var(--mono); font-size: 0.82rem; color: var(--ink); display: grid; gap: 2px; }
+.resolution-changes li::marker { color: var(--accent); }
+.inc.is-warning .flag { background: rgba(255, 216, 77, 0.15); color: var(--highlight); }

@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { ApiError, client } from "../api";
 import { paths } from "../router";
-import { type DocumentInfo, type Pending, type Project, STAGE_LABEL } from "../types";
+import {
+  type DocumentInfo,
+  type Inconsistency,
+  type Pending,
+  type Project,
+  type Resolution,
+  STAGE_LABEL,
+} from "../types";
 import { errorText, formatDate, Loading, Notice, useLoad } from "../ui";
 
 const DOC_LABEL = { product_spec: "Especificación del producto", architecture: "Arquitectura" };
@@ -131,16 +138,19 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
           : (
             <ul className="inconsistencies">
               {data.inconsistencies.map((i) => (
-                <li key={i.id} className={`inc is-${i.severity}`}>
-                  <span className="flag">{i.severity === "critical" ? "Crítica" : "Advertencia"}</span>
-                  <p>{i.description}</p>
-                  <p className="muted">{i.stages.map((s) => STAGE_LABEL[s]).join(", ")}</p>
-                  {canEdit && (
-                    <button type="button" className="link" onClick={() => resolve(i.id)}>
-                      Marcar como resuelta
-                    </button>
-                  )}
-                </li>
+                <InconsistencyItem
+                  key={i.id}
+                  project={project}
+                  inc={i}
+                  canEdit={canEdit}
+                  onMarkResolved={() => resolve(i.id)}
+                  onApplied={async (text) => {
+                    setNotice({ kind: "ok", text });
+                    setBlockedBy(null);
+                    await reload();
+                    onProjectChange();
+                  }}
+                />
               ))}
             </ul>
           )}
@@ -182,4 +192,117 @@ function groupByVersion(docs: DocumentInfo[]) {
   return [...map.entries()]
     .sort((a, b) => b[0] - a[0])
     .map(([version, list]) => ({ version, docs: list.sort((a, b) => a.kind.localeCompare(b.kind)).reverse() }));
+}
+
+/**
+ * Una inconsistencia con dos salidas: marcarla como resuelta, o pedirle a la IA un cambio
+ * mínimo en la etapa más tardía involucrada, revisarlo y aplicarlo.
+ */
+function InconsistencyItem(
+  { project, inc, canEdit, onMarkResolved, onApplied }: {
+    project: Project;
+    inc: Inconsistency;
+    canEdit: boolean;
+    onMarkResolved: () => void;
+    onApplied: (message: string) => Promise<void>;
+  },
+) {
+  const [busy, setBusy] = useState<null | "propose" | "apply">(null);
+  const [proposal, setProposal] = useState<Resolution | null>(null);
+  const [error, setError] = useState<unknown>(null);
+
+  async function propose() {
+    setBusy("propose");
+    setError(null);
+    setProposal(null);
+    try {
+      setProposal((await client.review.aiResolve(project.id, inc.id)).resolution);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function apply() {
+    if (proposal?.kind !== "fix") return;
+    setBusy("apply");
+    setError(null);
+    try {
+      await client.review.applyResolution(project.id, inc.id, {
+        stage: proposal.stage,
+        version: proposal.baseVersion,
+        artifact: proposal.artifact,
+        summary: proposal.summary,
+      });
+      await onApplied(
+        `Inconsistencia resuelta en ${STAGE_LABEL[proposal.stage]}` +
+          (proposal.wasApproved ? ". La etapa queda aprobada por ti." : "."),
+      );
+    } catch (err) {
+      setError(err);
+      setBusy(null);
+    }
+  }
+
+  return (
+    <li className={`inc is-${inc.severity}`}>
+      <span className="flag">{inc.severity === "critical" ? "Crítica" : "Advertencia"}</span>
+      <p>{inc.description}</p>
+      <p className="muted">{inc.stages.map((s) => STAGE_LABEL[s]).join(", ")}</p>
+
+      {canEdit && !proposal && (
+        <div className="row">
+          <button type="button" className="primary" onClick={propose} disabled={!!busy}>
+            {busy === "propose" ? "Buscando solución…" : "Resolver con IA"}
+          </button>
+          <button type="button" className="link" onClick={onMarkResolved} disabled={!!busy}>
+            Marcar como resuelta
+          </button>
+        </div>
+      )}
+      {busy === "propose" && (
+        <p className="thinking" role="status">la IA está buscando el cambio mínimo que lo resuelve</p>
+      )}
+      {error ? <Notice onClose={() => setError(null)}>{errorText(error)}</Notice> : null}
+
+      {proposal?.kind === "fix" && (
+        <div className="resolution">
+          <p className="eyebrow">Propuesta para {STAGE_LABEL[proposal.stage]}</p>
+          <p>{proposal.summary}</p>
+          {proposal.changes.length > 0 && (
+            <ul className="resolution-changes">
+              {proposal.changes.map((c) => <li key={c}>{c}</li>)}
+            </ul>
+          )}
+          <p className="muted small">
+            El validador confirmó que esto cierra la inconsistencia sin crear otras. Al aplicar se
+            guarda una versión nueva de {STAGE_LABEL[proposal.stage]}
+            {proposal.wasApproved ? ", que queda aprobada por ti" : ""}, y las etapas siguientes
+            conservan su aprobación.
+          </p>
+          <div className="row">
+            <button type="button" className="primary" onClick={apply} disabled={!!busy}>
+              {busy === "apply" ? "Aplicando…" : "Aplicar"}
+            </button>
+            <button type="button" onClick={() => setProposal(null)} disabled={!!busy}>Descartar</button>
+          </div>
+        </div>
+      )}
+      {proposal?.kind === "manual" && (
+        <div className="resolution is-manual">
+          <p className="eyebrow">Hay que decidirlo en otra etapa</p>
+          <p>{proposal.explanation}</p>
+          <div className="row">
+            {proposal.stage && proposal.stage !== "review" && (
+              <a className="button" href={paths.stage(project.id, proposal.stage)}>
+                Ir a {STAGE_LABEL[proposal.stage]}
+              </a>
+            )}
+            <button type="button" className="link" onClick={() => setProposal(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </li>
+  );
 }

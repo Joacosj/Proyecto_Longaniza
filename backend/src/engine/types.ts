@@ -68,6 +68,24 @@ export interface Engine {
     stage: K;
   }): Promise<{ artifact: ArtifactByStage[K]; questions: NewQuestion[] }>;
 
+  /**
+   * Propone un cambio mínimo en la etapa más tardía involucrada para cerrar una inconsistencia.
+   * Solo devuelve "fix" si el validador confirma que se cierra sin abrir otras; si el arreglo
+   * exige cambiar una etapa anterior, devuelve "manual" con la explicación.
+   */
+  resolveInconsistency(input: {
+    context: ProjectContext;
+    inconsistency: Inconsistency;
+  }): Promise<
+    | {
+      kind: "fix";
+      stage: Exclude<GeneratableStage, "definition">;
+      artifact: ArtifactByStage[Exclude<GeneratableStage, "definition">];
+      summary: string;
+    }
+    | { kind: "manual"; stage: StageKind | null; explanation: string }
+  >;
+
   /** Revisa una etapa o todo el proyecto. Determinista: no llama a la IA. */
   checkConsistency(context: ProjectContext): Inconsistency[];
 

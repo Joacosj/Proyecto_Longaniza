@@ -15,6 +15,7 @@ import { checkConsistency } from "./consistency.ts";
 import { converseDefinition, type JsonCompleter } from "./definition.ts";
 import { renderDocuments } from "./documents.ts";
 import { generateStage } from "./generate.ts";
+import { resolveInconsistency } from "./resolve.ts";
 import { completeJson, type LlmConfig, LlmError, loadLlmConfig } from "./llm.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
@@ -61,6 +62,9 @@ export function createEngine(complete: JsonCompleter): Engine {
         });
         return { artifact: out.artifact as ArtifactByStage[K], questions: out.questions };
       }),
+
+    resolveInconsistency: (input) =>
+      withFriendlyErrors(() => resolveInconsistency(complete, input)),
 
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),

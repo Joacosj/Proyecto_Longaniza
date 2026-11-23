@@ -17,6 +17,7 @@ import type {
   StageSummary,
   StageVersion,
   User,
+  Resolution,
 } from "./types";
 
 export class ApiError extends Error {
@@ -156,6 +157,17 @@ export const client = {
       api<{ inconsistency: Inconsistency }>(
         `${p(id)}/inconsistencies/${incId}`,
         json("PATCH", { status: "resolved" }),
+      ),
+    aiResolve: (id: string, incId: string) =>
+      api<{ resolution: Resolution }>(`${p(id)}/inconsistencies/${incId}/resolution`, json("POST")),
+    applyResolution: (
+      id: string,
+      incId: string,
+      body: { stage: StageKind; version: number; artifact: Record<string, unknown>; summary: string },
+    ) =>
+      api<{ autoResolved: number; inconsistencies: Inconsistency[] }>(
+        `${p(id)}/inconsistencies/${incId}/resolution/apply`,
+        json("POST", body),
       ),
     generateDocuments: (id: string) =>
       api<{ version: number; documents: DocumentInfo[] }>(`${p(id)}/documents`, json("POST")),

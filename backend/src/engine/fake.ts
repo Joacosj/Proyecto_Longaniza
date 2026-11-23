@@ -35,6 +35,12 @@ export function createFakeEngine(): Engine {
         artifact: ejemplo().stages[stage] as ArtifactByStage[K],
         questions: [],
       }),
+    resolveInconsistency: ({ inconsistency }) =>
+      Promise.resolve({
+        kind: "manual" as const,
+        stage: inconsistency.stages.at(-1) ?? null,
+        explanation: "(motor falso) Resolver con IA necesita el motor real.",
+      }),
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),
     listArchitectures,

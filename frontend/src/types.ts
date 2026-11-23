@@ -178,3 +178,16 @@ export interface StageComponentProps<A = Record<string, unknown>> {
   /** Extra, por si un componente necesita llamar a la API (ej. el chat de definición). */
   projectId?: string;
 }
+
+/** Propuesta de "Resolver con IA" para una inconsistencia. */
+export type Resolution =
+  | {
+    kind: "fix";
+    stage: StageKind;
+    artifact: Record<string, unknown>;
+    summary: string;
+    baseVersion: number;
+    wasApproved: boolean;
+    changes: string[];
+  }
+  | { kind: "manual"; stage: StageKind | null; explanation: string };
