@@ -13,6 +13,9 @@
 #   REGION        por defecto southamerica-west1 (Santiago)
 #   LLM_MODEL     por defecto google/gemini-3.5-flash
 #
+# Inicio de sesión con Google (opcional): si existen los secretos ideator-google-client-id e
+# ideator-google-client-secret, se configuran solos (ver docs/despliegue-gcp.md).
+#
 # Se puede correr de nuevo sin problema: lo que ya existe se reutiliza y solo se vuelve a
 # desplegar el código. Guía completa: docs/despliegue-gcp.md
 set -euo pipefail
@@ -88,6 +91,14 @@ if [[ -n "$CLAVE_IA" ]]; then
     crear_secreto ideator-gcp-key <"$CLAVE_IA"
   fi
 fi
+# Inicio de sesión con Google, si sus credenciales están guardadas.
+if existe_secreto ideator-google-client-id && existe_secreto ideator-google-client-secret; then
+  echo "Inicio de sesión con Google: activado."
+  SECRETOS="${SECRETOS},GOOGLE_CLIENT_ID=ideator-google-client-id:latest"
+  SECRETOS="${SECRETOS},GOOGLE_CLIENT_SECRET=ideator-google-client-secret:latest"
+else
+  echo "Inicio de sesión con Google: desactivado (faltan sus secretos)."
+fi
 # Si la clave ya está guardada (de un despliegue anterior), se sigue usando.
 USA_CLAVE=""
 if existe_secreto ideator-gcp-key; then
@@ -137,4 +148,6 @@ paso "Comprobando"
 curl -fsS "${URL}/api/health" && echo
 echo
 echo "Listo: ${URL}"
+echo "Para el inicio con Google, la URI de redireccionamiento autorizada del cliente OAuth es:"
+echo "  ${URL}/api/auth/sso/google/callback"
 echo "Registros: gcloud run services logs read $SERVICIO --region $REGION --limit 50"

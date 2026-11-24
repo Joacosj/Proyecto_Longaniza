@@ -73,6 +73,26 @@ gcloud run services logs read ideator --region southamerica-west1 --limit 50
 Al arrancar debe aparecer `Motor: IA real (Google Cloud Vertex AI, …)`. Si dice
 `Motor: falso (…)`, el mensaje entre paréntesis indica qué variable o permiso falta.
 
+## Inicio de sesión con Google
+
+El botón "Continuar con Google" aparece solo si la app tiene las credenciales del cliente OAuth
+(las mismas `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` del `.env` local). Una sola vez:
+
+1. En la consola: APIs y servicios → Credenciales → tu ID de cliente OAuth → en
+   **URI de redireccionamiento autorizados** agrega `<URL de la app>/api/auth/sso/google/callback`
+   y guarda (deja también la de localhost).
+2. Guarda las credenciales como secretos (el secreto se escribe sin que se vea en pantalla):
+
+```bash
+read -p "Client ID: " ID; printf '%s' "$ID" | gcloud secrets create ideator-google-client-id --data-file=-
+read -s -p "Client secret: " S; echo; printf '%s' "$S" | gcloud secrets create ideator-google-client-secret --data-file=-; unset S
+```
+
+3. Vuelve a correr el script de despliegue: detecta los secretos y activa el botón.
+
+Si la pantalla de consentimiento está en modo **Prueba**, solo pueden entrar los correos de la
+lista de usuarios de prueba: agrega a los evaluadores o publícala.
+
 ## Actualizar después de un cambio
 
 ```bash
