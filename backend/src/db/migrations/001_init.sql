@@ -1,4 +1,4 @@
--- Modelo inicial de Longanizator. Ver docs/modelo-datos.md.
+-- Modelo inicial de Ideator. Ver docs/modelo-datos.md.
 
 -- ---------------------------------------------------------------- Usuarios
 CREATE TABLE users (
@@ -111,7 +111,7 @@ CREATE TABLE messages (
 );
 CREATE INDEX messages_project_stage_idx ON messages (project_id, stage_kind, created_at);
 
--- Preguntas que Longanizator plantea. Una pregunta bloqueante abierta impide aprobar su etapa
+-- Preguntas que Ideator plantea. Una pregunta bloqueante abierta impide aprobar su etapa
 -- y generar los documentos finales.
 CREATE TABLE questions (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
