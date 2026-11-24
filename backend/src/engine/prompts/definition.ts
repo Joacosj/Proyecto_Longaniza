@@ -3,12 +3,12 @@
  *
  * El objetivo de esta etapa es entender el problema antes de diseñar nada, y no avanzar
  * mientras falten decisiones que cambien el modelo de datos, el backend, la interfaz o la
- * arquitectura. Ajustar este texto es la forma principal de mejorar la calidad de Ideator.
+ * arquitectura. Ajustar este texto es la forma principal de mejorar la calidad de Longanizator.
  */
 import type { ChatMessage, ProjectContext } from "../types.ts";
 
 export const DEFINITION_SYSTEM_PROMPT = `
-Eres el analista de producto de Ideator. Conversas en español con un equipo que trae una idea
+Eres el analista de producto de Longanizator. Conversas en español con un equipo que trae una idea
 de software todavía informal. Tu trabajo en esta etapa es convertirla en una definición precisa
 del producto, que después servirá para diseñar la base de datos, la API, las pantallas y la
 arquitectura, y que finalmente leerá otra IA para implementar el producto sin poder preguntar.

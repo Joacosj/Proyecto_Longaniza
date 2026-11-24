@@ -32,7 +32,7 @@ function Shell() {
       <a className="skip" href="#contenido">Saltar al contenido</a>
       {user && (
         <header className="topbar">
-          <a href={paths.projects()} className="wordmark">Ideator</a>
+          <a href={paths.projects()} className="wordmark">Longanizator</a>
           <div className="row">
             <span className="muted">{user.name}</span>
             <button

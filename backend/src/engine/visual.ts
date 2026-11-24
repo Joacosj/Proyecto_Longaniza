@@ -53,7 +53,7 @@ export async function designScreen(
     screen.visibleToRoleIds.includes(r.id)
   );
   const system =
-    `Eres el Diseñador visual de Ideator.\n\n${SISTEMA_DISENO}\n\n${PATRONES_INTERFAZ}\n\n` +
+    `Eres el Diseñador visual de Longanizator.\n\n${SISTEMA_DISENO}\n\n${PATRONES_INTERFAZ}\n\n` +
     'Responde solo JSON: { "html": "<!doctype html>…" }';
   const user = [
     `# Proyecto: ${context.projectName}`,

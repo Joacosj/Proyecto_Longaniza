@@ -35,7 +35,7 @@ export function knownRefs(context: ProjectContext): Set<string> {
   return new Set(ids);
 }
 
-/** Ids con formato de Ideator citados en un texto (ROLE-1, REQ-3, EP-12, SCR-4…). */
+/** Ids con formato de Longanizator citados en un texto (ROLE-1, REQ-3, EP-12, SCR-4…). */
 export function citedIds(text: string): string[] {
   return [...text.matchAll(/\b(?:ROLE|FEAT|REQ|RULE|EP|SCR)-\d+\b/g)].map((m) => m[0]);
 }
@@ -61,7 +61,7 @@ function projectJson(context: ProjectContext): string {
 
 // ---------------------------------------------------------------- Auditor semántico
 const AUDITOR = `
-Eres el Auditor semántico de Ideator. Revisas una especificación de software ya generada en
+Eres el Auditor semántico de Longanizator. Revisas una especificación de software ya generada en
 etapas (definición, base de datos, API, pantallas, arquitectura). Un validador en código ya
 comprobó las referencias (que los ids existan). Tú buscas lo que el código no puede ver:
 - reglas de negocio (RULE-n) que ningún endpoint ni restricción de la base hace cumplir;
@@ -105,7 +105,7 @@ export interface ReviewFinding {
 }
 
 const REVISOR = `
-Eres el Revisor externo de Ideator. Vas a recibir los dos documentos Markdown que otra IA usará
+Eres el Revisor externo de Longanizator. Vas a recibir los dos documentos Markdown que otra IA usará
 para implementar el producto sin poder preguntar nada. Léelos como esa IA: ¿qué decisiones
 tendrías que inventar para construirlo? (un campo sin tipo, un error sin código, una pantalla
 sin acción para un endpoint, una regla ambigua, un valor sin definir, una contradicción).

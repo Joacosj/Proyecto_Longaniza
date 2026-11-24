@@ -1,5 +1,5 @@
 /**
- * Motor real de Ideator.
+ * Motor real de Longanizator.
  *
  * - converse: conversación de la etapa de definición (definition.ts).
  * - generate: definición → borrador a partir de la idea, las respuestas y el chat; demás etapas → propuesta

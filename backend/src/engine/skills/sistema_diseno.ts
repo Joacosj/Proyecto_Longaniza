@@ -1,5 +1,5 @@
 /**
- * Skill "Sistema de diseño de Ideator": define cómo dibuja el Diseñador visual. Da coherencia
+ * Skill "Sistema de diseño de Longanizator": define cómo dibuja el Diseñador visual. Da coherencia
  * a todas las vistas previas y fija las reglas de seguridad del HTML que se acepta.
  */
 export const SISTEMA_DISENO = `

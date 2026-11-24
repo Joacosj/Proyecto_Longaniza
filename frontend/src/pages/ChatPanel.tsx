@@ -91,7 +91,7 @@ export function ChatPanel(
         )}
         {data.messages.map((m: Message) => (
           <li key={m.id} className={`msg msg-${m.role}`}>
-            <span className="msg-author">{m.role === "assistant" ? "Ideator" : m.user?.name ?? "Tú"}</span>
+            <span className="msg-author">{m.role === "assistant" ? "Longanizator" : m.user?.name ?? "Tú"}</span>
             <p>{m.content}</p>
           </li>
         ))}

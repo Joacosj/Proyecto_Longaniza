@@ -1,5 +1,5 @@
 /**
- * Los agentes de Ideator. Cada uno es una IA especializada: tiene un rol, sus propias
+ * Los agentes de Longanizator. Cada uno es una IA especializada: tiene un rol, sus propias
  * instrucciones, las skills (conocimiento de dominio que se le inyecta) y las tools (validadores
  * y verificaciones en código) con las que se controla su trabajo antes de aceptarlo.
  *
@@ -77,7 +77,7 @@ export const AGENTS: readonly AgentInfo[] = [
     name: "Diseñador visual",
     role: "Dibuja cómo se vería cada pantalla, con datos de ejemplo coherentes con el modelo.",
     stage: "frontend",
-    skills: ["Sistema de diseño de Ideator", "Patrones de interfaz web"],
+    skills: ["Sistema de diseño de Longanizator", "Patrones de interfaz web"],
     tools: ["Validador de HTML seguro", "Vista previa aislada"],
   },
   {

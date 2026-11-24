@@ -1,6 +1,6 @@
-# Ideator
+# Longanizator
 
-Proyecto semestral de Programación Profesional (TICS420). Ideator guía a una persona o equipo
+Proyecto semestral de Programación Profesional (TICS420). Longanizator guía a una persona o equipo
 desde una idea informal hasta una especificación técnica que otra IA puede implementar sin
 hacer preguntas adicionales.
 

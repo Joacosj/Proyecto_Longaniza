@@ -31,7 +31,7 @@ function AuthFrame({ title, children }: { title: string; children: React.ReactNo
   return (
     <main className="auth">
       <div className="auth-intro">
-        <p className="wordmark">Ideator</p>
+        <p className="wordmark">Longanizator</p>
         <p className="lede">
           De una idea suelta a dos documentos que otra IA puede implementar, en seis etapas
           revisadas por tu equipo.
