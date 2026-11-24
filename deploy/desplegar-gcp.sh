@@ -35,6 +35,11 @@ RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
 
 paso() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 existe_secreto() { gcloud secrets describe "$1" --project "$PROYECTO_APP" >/dev/null 2>&1; }
+# El secreto existe y tiene al menos una versión con valor (si no, Cloud Run no despliega).
+tiene_valor() {
+  [[ -n "$(gcloud secrets versions list "$1" --project "$PROYECTO_APP" --filter='state=ENABLED' \
+    --limit=1 --format='value(name)' 2>/dev/null)" ]]
+}
 crear_secreto() { # nombre, contenido por stdin
   gcloud secrets create "$1" --project "$PROYECTO_APP" --replication-policy=automatic \
     --data-file=- >/dev/null
@@ -92,16 +97,16 @@ if [[ -n "$CLAVE_IA" ]]; then
   fi
 fi
 # Inicio de sesión con Google, si sus credenciales están guardadas.
-if existe_secreto ideator-google-client-id && existe_secreto ideator-google-client-secret; then
+if tiene_valor ideator-google-client-id && tiene_valor ideator-google-client-secret; then
   echo "Inicio de sesión con Google: activado."
   SECRETOS="${SECRETOS},GOOGLE_CLIENT_ID=ideator-google-client-id:latest"
   SECRETOS="${SECRETOS},GOOGLE_CLIENT_SECRET=ideator-google-client-secret:latest"
 else
-  echo "Inicio de sesión con Google: desactivado (faltan sus secretos)."
+  echo "Inicio de sesión con Google: desactivado (falta guardar el valor de sus secretos)."
 fi
 # Si la clave ya está guardada (de un despliegue anterior), se sigue usando.
 USA_CLAVE=""
-if existe_secreto ideator-gcp-key; then
+if tiene_valor ideator-gcp-key; then
   USA_CLAVE=1
   SECRETOS="${SECRETOS},/secrets/gcp-key.json=ideator-gcp-key:latest"
   VARS="${VARS},GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-key.json"
