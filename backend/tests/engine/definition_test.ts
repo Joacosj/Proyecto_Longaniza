@@ -256,3 +256,23 @@ Deno.test("el motor real usa la conversación en definición y orienta en las de
   assert.match(db.reply, /Generar con IA/);
   assert.equal(ai.calls.length, 1);
 });
+
+Deno.test("generar la definición incluye lo conversado en el chat", async () => {
+  const ai = fakeAi([{
+    reply: "Listo",
+    newQuestions: [],
+    artifactDraft: ejemplo().stages.definition,
+  }]);
+  const engine = createEngine(ai.complete);
+  await engine.generate({
+    context: contexto(),
+    stage: "definition",
+    history: [
+      { role: "user", content: "Aclaración: los préstamos duran máximo 3 días hábiles." },
+      { role: "assistant", content: "Anotado." },
+    ],
+  });
+  const enviados = ai.calls[0].messages.map((m) => m.content).join("\n");
+  assert.match(enviados, /máximo 3 días hábiles/);
+  assert.match(ai.calls[0].messages.at(-1)!.content, /conversación/);
+});

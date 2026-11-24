@@ -2,7 +2,7 @@
  * Motor real de Ideator.
  *
  * - converse: conversación de la etapa de definición (definition.ts).
- * - generate: definición → borrador a partir de lo conversado; demás etapas → propuesta
+ * - generate: definición → borrador a partir de la idea, las respuestas y el chat; demás etapas → propuesta
  *   completa a partir de las anteriores (generate.ts).
  * - checkConsistency, renderDocuments, listArchitectures: deterministas, sin IA.
  *
@@ -35,15 +35,15 @@ export function createEngine(complete: JsonCompleter): Engine {
       }),
 
     generate: <K extends GeneratableStage>(
-      { context, stage }: { context: Parameters<Engine["generate"]>[0]["context"]; stage: K },
+      { context, stage, history = [] }: Parameters<Engine["generate"]>[0] & { stage: K },
     ) =>
       withFriendlyErrors(async () => {
         if (stage === "definition") {
           const turn = await converseDefinition(complete, {
             context,
-            history: [],
-            userMessage: "Con la información y las respuestas disponibles, entrega el borrador " +
-              "completo de la definición.",
+            history,
+            userMessage: "Con la idea, las respuestas disponibles y todo lo aclarado en esta " +
+              "conversación, entrega el borrador completo de la definición.",
           });
           if (!turn.artifactDraft) {
             throw new ApiError(

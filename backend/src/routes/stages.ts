@@ -8,6 +8,7 @@ import { readJsonObject, Validator } from "../http/body.ts";
 import { ApiError } from "../http/errors.ts";
 import { auditRepo } from "../repositories/audit.ts";
 import { buildProjectContext } from "../repositories/context.ts";
+import { messagesRepo } from "../repositories/messages.ts";
 import { questionsRepo } from "../repositories/questions.ts";
 import {
   isStageKind,
@@ -19,6 +20,9 @@ import {
 import { inTransaction } from "../repositories/tx.ts";
 import { runAgent } from "../agents/tracker.ts";
 import { type AgentId, STAGE_AGENT } from "../engine/agents.ts";
+
+/** Mensajes del chat que se envían al generar la definición (los más recientes). */
+const MAX_HISTORY = 40;
 
 export type StageDeps = AuthDeps & { engine: Engine };
 
@@ -252,13 +256,18 @@ export function registerStageRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     // La llamada a la IA puede tardar: se hace fuera de la transacción. Si alguien guarda
     // mientras tanto, el guardado de abajo responde 409.
     const context = await buildProjectContext(deps.sql, projectId);
+    // En la definición, lo conversado en el chat también cuenta (últimos mensajes).
+    const history = kind === "definition"
+      ? (await messagesRepo(deps.sql).list(projectId, kind)).slice(-MAX_HISTORY)
+        .map((m) => ({ role: m.role, content: m.content }))
+      : [];
     let result: Awaited<ReturnType<Engine["generate"]>>;
     try {
       const agent = STAGE_AGENT[kind as GeneratableStage];
       result = await runAgent(
         projectId,
         { agent, task: `Generando la etapa ${kind}`, userName: c.get("user").name },
-        () => deps.engine.generate({ context, stage: kind as GeneratableStage }),
+        () => deps.engine.generate({ context, stage: kind as GeneratableStage, history }),
       );
     } catch (e) {
       // Si la IA no puede proponer porque faltan decisiones, sus preguntas se guardan para

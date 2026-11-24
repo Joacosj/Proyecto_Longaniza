@@ -62,10 +62,15 @@ export interface Engine {
     artifactDraft?: ArtifactByStage[GeneratableStage];
   }>;
 
-  /** Propone el artefacto completo de una etapa usando las etapas anteriores como contexto. */
+  /**
+   * Propone el artefacto completo de una etapa usando las etapas anteriores como contexto.
+   * En la definición también recibe la conversación de la etapa (`history`), para que las
+   * aclaraciones hechas en el chat no se pierdan al apretar "Generar con IA".
+   */
   generate<K extends GeneratableStage>(input: {
     context: ProjectContext;
     stage: K;
+    history?: ChatMessage[];
   }): Promise<{ artifact: ArtifactByStage[K]; questions: NewQuestion[] }>;
 
   /**
