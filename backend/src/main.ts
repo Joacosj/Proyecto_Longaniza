@@ -6,9 +6,10 @@ import { createEngineFromEnv } from "./engine/engine.ts";
 import { loadLlmConfig, providerLabel } from "./engine/llm.ts";
 import type { Engine } from "./engine/types.ts";
 import { googleProvider, type SsoProvider } from "./auth/sso.ts";
+import { withStatic } from "./http/static.ts";
 
 const config = loadConfig();
-const sql = createSql(config.databaseUrl);
+const sql = createSql(config.databaseUrl, config.dbSocketDir);
 
 // Con las variables LLM_* usa la IA real; sin ellas (o con USE_FAKE_ENGINE=1), el motor falso.
 function pickEngine(): Engine {
@@ -39,4 +40,7 @@ const app = createApp({
   engine: pickEngine(),
 });
 
-Deno.serve({ port: config.port, hostname: "0.0.0.0" }, app.fetch);
+// En la nube un solo servicio entrega la página y la API (/api/...), sin CORS ni proxy.
+const handler = config.staticDir ? withStatic(app.fetch, config.staticDir) : app.fetch;
+if (config.staticDir) console.log(`Sirviendo el frontend desde ${config.staticDir}`);
+Deno.serve({ port: config.port, hostname: "0.0.0.0" }, handler);

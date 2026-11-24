@@ -27,6 +27,11 @@ docker compose up --build
   crear la cuenta de servicio y completar el `.env`. Sin esa configuración, la app arranca con
   un motor falso de ejemplo.
 
+### En la nube (Google Cloud)
+
+Un solo comando desde Cloud Shell despliega la app en Cloud Run con Cloud SQL, y deja la IA
+cobrándose en otro proyecto: [docs/despliegue-gcp.md](docs/despliegue-gcp.md).
+
 ### Sin Docker
 
 ```bash

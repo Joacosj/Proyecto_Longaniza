@@ -124,3 +124,45 @@ export function serviceAccountTokenSource(
     },
   };
 }
+
+const METADATA_TOKEN_URL =
+  "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+
+/**
+ * Token de la identidad del propio servicio en Google Cloud (Cloud Run, Compute Engine), sin
+ * archivo de clave: se pide al servidor de metadatos. La cuenta de servicio del servicio debe
+ * tener el rol "Usuario de Agent Platform" en el proyecto que paga la IA, aunque sea otro.
+ */
+export function metadataTokenSource(now: () => number = Date.now): TokenSource {
+  let cached: { value: string; expiresAt: number } | null = null;
+  let pending: Promise<string> | null = null;
+
+  async function fetchToken(fetchFn: typeof fetch): Promise<string> {
+    const res = await fetchFn(METADATA_TOKEN_URL, { headers: { "Metadata-Flavor": "Google" } });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || typeof data?.access_token !== "string") {
+      throw new Error(
+        `El servidor de metadatos de Google no entregó un token (HTTP ${res.status}). ` +
+          "¿El servicio corre en Google Cloud?",
+      );
+    }
+    cached = {
+      value: data.access_token,
+      expiresAt: now() + Number(data.expires_in ?? 3600) * 1000,
+    };
+    return data.access_token;
+  }
+
+  return {
+    token(fetchFn = fetch) {
+      if (cached && cached.expiresAt - now() > REFRESH_MARGIN_MS) {
+        return Promise.resolve(cached.value);
+      }
+      pending ??= fetchToken(fetchFn).finally(() => (pending = null));
+      return pending;
+    },
+    reset() {
+      cached = null;
+    },
+  };
+}

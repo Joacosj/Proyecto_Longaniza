@@ -12,7 +12,12 @@
  * pide a la IA que la corrija una vez.
  */
 
-import { parseServiceAccount, serviceAccountTokenSource, type TokenSource } from "./google_auth.ts";
+import {
+  metadataTokenSource,
+  parseServiceAccount,
+  serviceAccountTokenSource,
+  type TokenSource,
+} from "./google_auth.ts";
 
 export type LlmProvider = "vertex" | "openai" | "foundry";
 
@@ -76,8 +81,13 @@ export function loadLlmConfig(
   if (provider === "vertex") {
     const project = get("GCP_PROJECT_ID");
     const credentials = get("GOOGLE_APPLICATION_CREDENTIALS");
-    const missing = [!project && "GCP_PROJECT_ID", !credentials && "GOOGLE_APPLICATION_CREDENTIALS"]
-      .filter(Boolean);
+    // Sin archivo de clave, en Google Cloud (Cloud Run define K_SERVICE) se usa la identidad
+    // del servicio. GCP_USE_METADATA=1 lo fuerza.
+    const useMetadata = !credentials && (!!get("K_SERVICE") || get("GCP_USE_METADATA") === "1");
+    const missing = [
+      !project && "GCP_PROJECT_ID",
+      !credentials && !useMetadata && "GOOGLE_APPLICATION_CREDENTIALS",
+    ].filter(Boolean);
     if (missing.length) {
       throw new LlmError("config", `Faltan variables de entorno: ${missing.join(", ")}`);
     }
@@ -93,7 +103,7 @@ export function loadLlmConfig(
         `${host}/v1/projects/${project}/locations/${location}/endpoints/openapi`,
       // Vertex nombra los modelos con su editor: "google/gemini-...".
       model: model.includes("/") ? model : `google/${model}`,
-      tokens: serviceAccountTokenSource(async () => {
+      tokens: useMetadata ? metadataTokenSource() : serviceAccountTokenSource(async () => {
         if (account) return account;
         let text: string;
         try {

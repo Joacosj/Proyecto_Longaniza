@@ -264,3 +264,16 @@ Deno.test("una respuesta cortada por largo da un error claro", async () => {
     (e: unknown) => e instanceof LlmError && /LLM_MAX_TOKENS/.test(e.message),
   );
 });
+
+Deno.test("vertex en Cloud Run sin archivo de clave: usa el token del servidor de metadatos", async () => {
+  const env: Record<string, string> = { GCP_PROJECT_ID: "proyeco-longaniza", K_SERVICE: "ideator" };
+  const c = { ...loadLlmConfig((k) => env[k]), retryBaseMs: 1 };
+  const token = new Response(JSON.stringify({ access_token: "ya29.meta", expires_in: 3600 }));
+  const { fn, calls } = fakeFetch([token, ok('{"ok": true}')]);
+  await completeJson(c, { system: "", messages: [], validate: validateOk, fetchFn: fn });
+
+  assert.match(calls[0].url, /metadata\.google\.internal\/.*\/token$/);
+  assert.equal((calls[0].init.headers as Record<string, string>)["Metadata-Flavor"], "Google");
+  assert.match(calls[1].url, /projects\/proyeco-longaniza\//);
+  assert.equal((calls[1].init.headers as Record<string, string>).Authorization, "Bearer ya29.meta");
+});

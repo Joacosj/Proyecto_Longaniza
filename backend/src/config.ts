@@ -2,6 +2,10 @@
 export interface Config {
   port: number;
   databaseUrl: string;
+  /** Carpeta del socket de PostgreSQL (Cloud SQL en Cloud Run). Vacío = TCP según la URL. */
+  dbSocketDir?: string;
+  /** Carpeta con el frontend compilado. Si está, el backend también sirve la página. */
+  staticDir?: string;
   env: "development" | "test" | "production";
   /** Clave para firmar (HMAC) los tokens de sesión antes de guardarlos en la base. */
   sessionSecret: string;
@@ -20,6 +24,8 @@ export function loadConfig(): Config {
     port: Number(Deno.env.get("PORT") ?? 8000),
     databaseUrl: Deno.env.get("DATABASE_URL") ??
       "postgres://ideator:ideator@localhost:5432/ideator",
+    dbSocketDir: Deno.env.get("DB_SOCKET_DIR") || undefined,
+    staticDir: Deno.env.get("STATIC_DIR") || undefined,
     env,
     sessionSecret: sessionSecret || "dev-only-secret-change-me",
     appUrl: Deno.env.get("APP_URL") ?? "http://localhost:5173",

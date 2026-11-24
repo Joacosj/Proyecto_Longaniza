@@ -38,7 +38,8 @@ export async function migrate(sql: Sql): Promise<string[]> {
 }
 
 if (import.meta.main) {
-  const sql = createSql(loadConfig().databaseUrl);
+  const config = loadConfig();
+  const sql = createSql(config.databaseUrl, config.dbSocketDir);
   try {
     const ran = await migrate(sql);
     console.log(
