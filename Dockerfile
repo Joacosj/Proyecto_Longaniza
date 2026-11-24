@@ -3,9 +3,12 @@
 
 # 1) Compila el frontend
 FROM node:22-alpine AS frontend
-WORKDIR /web
+# Se respeta la estructura del repo: el frontend importa los contratos compartidos desde
+# ../backend/src/contracts.
+WORKDIR /src/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
+COPY backend/src/contracts /src/backend/src/contracts
 COPY frontend/ ./
 RUN npm run build
 
@@ -17,7 +20,7 @@ USER deno
 COPY --chown=deno:deno backend/deno.json backend/deno.lock* ./
 COPY --chown=deno:deno backend/src ./src
 RUN deno cache src/main.ts src/db/migrate.ts
-COPY --chown=deno:deno --from=frontend /web/dist ./public
+COPY --chown=deno:deno --from=frontend /src/frontend/dist ./public
 
 ENV APP_ENV=production \
     STATIC_DIR=/app/public \
