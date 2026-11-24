@@ -743,6 +743,9 @@ dialog.confirm h2 { color: var(--error); }
   color: var(--graphite);
 }
 .agent-kit .chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+/* Nombres largos de skills/tools: se parten en varias líneas en vez de salirse de la tarjeta. */
+.agent-kit .chip { white-space: normal; max-width: 100%; overflow-wrap: anywhere; line-height: 1.35; padding-block: .1rem; }
+.agent-card { min-width: 0; }
 .chip.skill { border-color: color-mix(in srgb, #b18cff 50%, transparent); color: #c9b2ff; }
 .chip.tool { border-color: color-mix(in srgb, #7dffb2 45%, transparent); color: #9dffc6; }
 .agent-status { margin-top: auto; padding-top: .5rem; border-top: 1px dashed var(--rule); }
