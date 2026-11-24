@@ -1,17 +1,37 @@
 import { useState } from "react";
+import { useAgentJob } from "../agentJobs";
 import { ApiError, client } from "../api";
 import { paths } from "../router";
-import { type DocumentInfo, type Pending, type Project, STAGE_LABEL } from "../types";
+import {
+  type DocumentInfo,
+  type Inconsistency,
+  type Pending,
+  type Project,
+  type Resolution,
+  STAGE_LABEL,
+} from "../types";
 import { errorText, formatDate, Loading, Notice, useLoad } from "../ui";
 
 const DOC_LABEL = { product_spec: "Especificación del producto", architecture: "Arquitectura" };
 
 export function ReviewTab({ project, onProjectChange }: { project: Project; onProjectChange: () => void }) {
   const { data, error, reload } = useLoad(() => client.review.get(project.id), [project.id]);
-  const [busy, setBusy] = useState<null | "check" | "docs">(null);
+  const [busy, setBusy] = useState<null | "check" | "docs" | "audit" | "external">(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "error" | "info"; text: string } | null>(null);
   const [blockedBy, setBlockedBy] = useState<Pending | null>(null);
   const canEdit = project.role !== "viewer";
+  // Si el auditor o el revisor siguieron trabajando mientras el usuario estaba en otra página.
+  const auditJob = useAgentJob(project.id, "audit", () => {
+    reload();
+    setNotice({ kind: "info", text: "El Auditor semántico terminó: revisa la lista de inconsistencias." });
+  });
+  const reviewJob = useAgentJob(project.id, "external-review", () => {
+    reload();
+    onProjectChange();
+    setNotice({ kind: "info", text: "El Revisor externo terminó: sus preguntas están en el panel Preguntas de cada etapa." });
+  });
+  const auditing = busy === "audit" || !!auditJob;
+  const reviewing = busy === "external" || !!reviewJob;
 
   if (error) return <Notice>{errorText(error)}</Notice>;
   if (!data) return <Loading />;
@@ -32,6 +52,35 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
           : `El validador encontró ${out.inconsistencies.length} inconsistencia(s) abiertas.`,
       });
       setBlockedBy(null);
+      await reload();
+    } catch (err) {
+      setNotice({ kind: "error", text: errorText(err) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runAgent(kind: "audit" | "external") {
+    setBusy(kind);
+    setNotice(null);
+    try {
+      if (kind === "audit") {
+        const out = await client.agents.semanticAudit(project.id);
+        setNotice({
+          kind: "info",
+          text: out.found === 0
+            ? "El Auditor semántico no encontró problemas de significado entre etapas."
+            : `El Auditor semántico encontró ${out.found} problema(s); ${out.added} nuevo(s) en la lista de inconsistencias.`,
+        });
+      } else {
+        const out = await client.agents.externalReview(project.id);
+        setNotice({
+          kind: "info",
+          text: out.questions.length === 0
+            ? "El Revisor externo no tendría que inventar nada para implementar el producto."
+            : `El Revisor externo dejó ${out.questions.length} pregunta(s) en las etapas correspondientes (panel Preguntas).`,
+        });
+      }
       await reload();
     } catch (err) {
       setNotice({ kind: "error", text: errorText(err) });
@@ -74,6 +123,29 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
   return (
     <div className="review">
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}
+
+      {canEdit && (
+        <section className="agent-actions">
+          <div>
+            <p className="eyebrow">Agentes de revisión</p>
+            <p className="muted small">
+              El Auditor revisa reglas, permisos y casos borde que el validador en código no ve. El
+              Revisor externo lee los documentos como la IA que implementará el producto y deja
+              preguntas por lo que tendría que inventar.
+            </p>
+          </div>
+          <div className="row">
+            <button type="button" onClick={() => runAgent("audit")} disabled={!!busy || auditing}>
+              {auditing ? "Auditando…" : "⚙ Auditor semántico"}
+            </button>
+            <button type="button" onClick={() => runAgent("external")} disabled={!!busy || reviewing}>
+              {reviewing ? "Leyendo documentos…" : "⚙ Revisor externo"}
+            </button>
+          </div>
+          {auditing && <p className="thinking">el Auditor semántico está revisando el proyecto</p>}
+          {reviewing && <p className="thinking">el Revisor externo está leyendo los documentos</p>}
+        </section>
+      )}
 
       <section className="stack">
         <div className="page-head">
@@ -131,16 +203,19 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
           : (
             <ul className="inconsistencies">
               {data.inconsistencies.map((i) => (
-                <li key={i.id} className={`inc is-${i.severity}`}>
-                  <span className="flag">{i.severity === "critical" ? "Crítica" : "Advertencia"}</span>
-                  <p>{i.description}</p>
-                  <p className="muted">{i.stages.map((s) => STAGE_LABEL[s]).join(", ")}</p>
-                  {canEdit && (
-                    <button type="button" className="link" onClick={() => resolve(i.id)}>
-                      Marcar como resuelta
-                    </button>
-                  )}
-                </li>
+                <InconsistencyItem
+                  key={i.id}
+                  project={project}
+                  inc={i}
+                  canEdit={canEdit}
+                  onMarkResolved={() => resolve(i.id)}
+                  onApplied={async (text) => {
+                    setNotice({ kind: "ok", text });
+                    setBlockedBy(null);
+                    await reload();
+                    onProjectChange();
+                  }}
+                />
               ))}
             </ul>
           )}
@@ -182,4 +257,118 @@ function groupByVersion(docs: DocumentInfo[]) {
   return [...map.entries()]
     .sort((a, b) => b[0] - a[0])
     .map(([version, list]) => ({ version, docs: list.sort((a, b) => a.kind.localeCompare(b.kind)).reverse() }));
+}
+
+/**
+ * Una inconsistencia con dos salidas: marcarla como resuelta, o pedirle a la IA un cambio
+ * mínimo en la etapa más tardía involucrada, revisarlo y aplicarlo.
+ */
+function InconsistencyItem(
+  { project, inc, canEdit, onMarkResolved, onApplied }: {
+    project: Project;
+    inc: Inconsistency;
+    canEdit: boolean;
+    onMarkResolved: () => void;
+    onApplied: (message: string) => Promise<void>;
+  },
+) {
+  const [busy, setBusy] = useState<null | "propose" | "apply">(null);
+  const [proposal, setProposal] = useState<Resolution | null>(null);
+  const [error, setError] = useState<unknown>(null);
+
+  async function propose() {
+    setBusy("propose");
+    setError(null);
+    setProposal(null);
+    try {
+      setProposal((await client.review.aiResolve(project.id, inc.id)).resolution);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function apply() {
+    if (proposal?.kind !== "fix") return;
+    setBusy("apply");
+    setError(null);
+    try {
+      await client.review.applyResolution(project.id, inc.id, {
+        stage: proposal.stage,
+        version: proposal.baseVersion,
+        artifact: proposal.artifact,
+        summary: proposal.summary,
+      });
+      await onApplied(
+        `Inconsistencia resuelta en ${STAGE_LABEL[proposal.stage]}` +
+          (proposal.wasApproved ? ". La etapa queda aprobada por ti." : "."),
+      );
+    } catch (err) {
+      setError(err);
+      setBusy(null);
+    }
+  }
+
+  return (
+    <li className={`inc is-${inc.severity}`}>
+      <span className="flag">{inc.severity === "critical" ? "Crítica" : "Advertencia"}</span>
+      {inc.source === "auditor" && <span className="agent-chip">⚙ Auditor semántico</span>}
+      <p>{inc.description}</p>
+      <p className="muted">{inc.stages.map((s) => STAGE_LABEL[s]).join(", ")}</p>
+
+      {canEdit && !proposal && (
+        <div className="row">
+          <button type="button" className="primary" onClick={propose} disabled={!!busy}>
+            {busy === "propose" ? "Buscando solución…" : "⚙ Resolver con IA"}
+          </button>
+          <button type="button" className="link" onClick={onMarkResolved} disabled={!!busy}>
+            Marcar como resuelta
+          </button>
+        </div>
+      )}
+      {busy === "propose" && (
+        <p className="thinking" role="status">el Resolvedor está buscando el cambio mínimo que lo resuelve</p>
+      )}
+      {error ? <Notice onClose={() => setError(null)}>{errorText(error)}</Notice> : null}
+
+      {proposal?.kind === "fix" && (
+        <div className="resolution">
+          <p className="eyebrow">Propuesta para {STAGE_LABEL[proposal.stage]}</p>
+          <p>{proposal.summary}</p>
+          {proposal.changes.length > 0 && (
+            <ul className="resolution-changes">
+              {proposal.changes.map((c) => <li key={c}>{c}</li>)}
+            </ul>
+          )}
+          <p className="muted small">
+            El validador confirmó que esto cierra la inconsistencia sin crear otras. Al aplicar se
+            guarda una versión nueva de {STAGE_LABEL[proposal.stage]}
+            {proposal.wasApproved ? ", que queda aprobada por ti" : ""}, y las etapas siguientes
+            conservan su aprobación.
+          </p>
+          <div className="row">
+            <button type="button" className="primary" onClick={apply} disabled={!!busy}>
+              {busy === "apply" ? "Aplicando…" : "Aplicar"}
+            </button>
+            <button type="button" onClick={() => setProposal(null)} disabled={!!busy}>Descartar</button>
+          </div>
+        </div>
+      )}
+      {proposal?.kind === "manual" && (
+        <div className="resolution is-manual">
+          <p className="eyebrow">Hay que decidirlo en otra etapa</p>
+          <p>{proposal.explanation}</p>
+          <div className="row">
+            {proposal.stage && proposal.stage !== "review" && (
+              <a className="button" href={paths.stage(project.id, proposal.stage)}>
+                Ir a {STAGE_LABEL[proposal.stage]}
+              </a>
+            )}
+            <button type="button" className="link" onClick={() => setProposal(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </li>
+  );
 }

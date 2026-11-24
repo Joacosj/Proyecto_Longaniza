@@ -8,9 +8,10 @@
 import type { ArchitectureTemplate, StageKind } from "../../contracts/artifacts.ts";
 import { STAGE_ORDER } from "../../contracts/artifacts.ts";
 import type { GeneratableStage, ProjectContext } from "../types.ts";
+import { PATRONES_INTERFAZ } from "../skills/patrones_interfaz.ts";
 
 const COMMON = `
-Eres el arquitecto de software de Ideator. Ideator convierte una idea en una especificación que
+Eres el arquitecto de software de Longanizator. Longanizator convierte una idea en una especificación que
 otra IA implementará SIN poder hacer preguntas. Recibes las etapas ya definidas del proyecto en
 JSON y debes producir la siguiente etapa.
 
@@ -147,8 +148,9 @@ Forma de "artifact":
     "states": { "empty": "", "loading": "", "error": "" }
   }],
   "navigation": [{ "from": "SCR-1", "to": "SCR-2", "trigger": "" }],
-  "featuresWithoutScreen": []
+  "featuresWithoutScreen": [{ "featureId": "FEAT-5", "reason": "cómo se opera, en una frase" }]
 }
+(featuresWithoutScreen va vacío [] si todas las funcionalidades tienen pantalla.)
 `.trim();
 
 const ARCHITECTURE = `
@@ -185,7 +187,7 @@ Forma de "artifact":
 const BY_STAGE: Record<Exclude<GeneratableStage, "definition">, string> = {
   database: DATABASE,
   backend: BACKEND,
-  frontend: FRONTEND,
+  frontend: `${FRONTEND}\n\n${PATRONES_INTERFAZ}`,
   architecture: ARCHITECTURE,
 };
 

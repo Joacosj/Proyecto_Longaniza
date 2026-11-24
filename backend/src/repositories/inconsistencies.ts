@@ -8,6 +8,8 @@ export interface Inconsistency {
   description: string;
   severity: "critical" | "warning";
   status: "open" | "resolved";
+  /** validator: el validador en código. auditor: el Auditor semántico (IA). */
+  source: "validator" | "auditor";
   resolvedBy: { id: string; name: string } | null;
   resolvedAt: Date | null;
   createdAt: Date;
@@ -20,7 +22,8 @@ type Row = Omit<Inconsistency, "resolvedBy"> & {
 
 const SELECT = (sql: Sql) =>
   sql`
-    SELECT i.id, i.stages, i.description, i.severity, i.status, i.resolved_at AS "resolvedAt",
+    SELECT i.id, i.stages, i.description, i.severity, i.status, i.source,
+           i.resolved_at AS "resolvedAt",
            i.created_at AS "createdAt", u.id AS "resolvedById", u.name AS "resolvedByName"
     FROM inconsistencies i LEFT JOIN users u ON u.id = i.resolved_by`;
 
@@ -55,7 +58,8 @@ export function inconsistenciesRepo(sql: Sql) {
      * automáticamente (resolved_by NULL). Devuelve cuántas se agregaron y resolvieron.
      */
     async sync(projectId: string, found: Found[]) {
-      const open = await this.list(projectId, "open");
+      // Solo las del validador: las del Auditor semántico no las reporta el código.
+      const open = (await this.list(projectId, "open")).filter((i) => i.source === "validator");
       const openKeys = new Map(open.map((i) => [keyOf(i), i.id]));
       const foundKeys = new Set(found.map(keyOf));
 
@@ -70,7 +74,8 @@ export function inconsistenciesRepo(sql: Sql) {
       // las siga reportando: es una decisión explícita del equipo.
       const manual = await sql<{ stages: string[]; description: string; severity: string }[]>`
         SELECT stages, description, severity FROM inconsistencies
-        WHERE project_id = ${projectId} AND status = 'resolved' AND resolved_by IS NOT NULL`;
+        WHERE project_id = ${projectId} AND status = 'resolved' AND resolved_by IS NOT NULL
+          AND source = 'validator'`;
       const manualKeys = new Set(manual.map(keyOf));
 
       const seen = new Set<string>(manualKeys);
@@ -93,6 +98,28 @@ export function inconsistenciesRepo(sql: Sql) {
         }`;
       }
       return { added: fresh.length, autoResolved: gone.length };
+    },
+
+    /** Agrega hallazgos del Auditor semántico, sin repetir los que ya están abiertos. */
+    async addAuditorFindings(projectId: string, found: Found[]): Promise<number> {
+      const open = new Set(
+        (await this.list(projectId, "open")).filter((i) => i.source === "auditor").map(keyOf),
+      );
+      const fresh = found.filter((f) => !open.has(keyOf(f)));
+      if (fresh.length) {
+        const rows = fresh.map((f) => ({
+          project_id: projectId,
+          stages: f.stages,
+          description: f.description,
+          severity: f.severity,
+          source: "auditor",
+        }));
+        await sql`
+          INSERT INTO inconsistencies ${
+          sql(rows, "project_id", "stages", "description", "severity", "source")
+        }`;
+      }
+      return fresh.length;
     },
 
     async resolve(id: string, userId: string) {

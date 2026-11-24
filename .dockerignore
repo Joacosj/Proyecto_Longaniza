@@ -1,0 +1,13 @@
+# Nunca entra a la imagen: claves, variables locales, dependencias y compilados.
+.git
+.env
+.env.*
+!.env.example
+secrets/
+**/*-key.json
+**/node_modules
+**/dist
+**/.vite
+backend/salida/
+backend/definicion-*.json
+*.log

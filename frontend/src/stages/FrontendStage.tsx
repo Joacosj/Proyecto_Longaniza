@@ -1,6 +1,10 @@
 import type { StageComponentProps } from "../types";
 import type { FrontendArtifact } from "./contracts";
+import { useCallback, useEffect, useState } from "react";
+import { client } from "../api";
+import type { ScreenPreview as Preview } from "../types";
 import { Mermaid } from "./Mermaid";
+import { ScreenPreview } from "./ScreenPreview";
 
 type Screen = FrontendArtifact["screens"][number];
 type Block = Screen["layout"][number];
@@ -19,7 +23,7 @@ export function navigationDiagram(artifact: FrontendArtifact): string {
   }
   if (artifact.entryScreenId) {
     lines.push(`  inicio(( )) --> ${node(artifact.entryScreenId)}`);
-    lines.push("  style inicio fill:#1d2b3a,stroke:#1d2b3a");
+    lines.push("  style inicio fill:#5ee7ff,stroke:#5ee7ff");
     lines.push(`  style ${node(artifact.entryScreenId)} stroke-width:3px`);
   }
   return lines.join("\n");
@@ -30,8 +34,16 @@ export function navigationDiagram(artifact: FrontendArtifact): string {
  * `layout`, y el mapa de navegación entre pantallas.
  */
 export function FrontendStage(
-  { artifact, editable, onChange }: StageComponentProps<FrontendArtifact>,
+  { artifact, editable, onChange, projectId }: StageComponentProps<FrontendArtifact>,
 ) {
+  const [previews, setPreviews] = useState<Record<string, Preview>>({});
+  const loadPreviews = useCallback(() => {
+    if (!projectId) return;
+    client.agents.previews(projectId)
+      .then(({ previews }) => setPreviews(Object.fromEntries(previews.map((p) => [p.screenId, p]))))
+      .catch(() => {});
+  }, [projectId]);
+  useEffect(loadPreviews, [loadPreviews]);
   const screens = artifact.screens ?? [];
   const names = new Map(screens.map((s) => [s.id, s.name]));
 
@@ -46,6 +58,7 @@ export function FrontendStage(
           <Mermaid
             code={navigationDiagram(artifact)}
             label="Mapa de navegación entre pantallas"
+            targets={new Map(screens.map((s) => [node(s.id), `screen-${s.id}`]))}
           />
         )}
         {artifact.entryScreenId && (
@@ -59,7 +72,7 @@ export function FrontendStage(
       <section className="stack">
         <h3>Pantallas</h3>
         {screens.map((s, i) => (
-          <article key={s.id ?? i} className="screen" aria-labelledby={`scr-${s.id}`}>
+          <article key={s.id ?? i} id={`screen-${s.id}`} className="screen" aria-labelledby={`scr-${s.id}`}>
             <header className="screen-head">
               <span className="chip">{s.id}</span>
               {editable
@@ -96,6 +109,16 @@ export function FrontendStage(
             </p>
 
             <Mockup screen={s} names={names} />
+            {projectId && s.id && (
+              <ScreenPreview
+                projectId={projectId}
+                screenId={s.id}
+                screenName={s.name}
+                initial={previews[s.id]}
+                onSaved={(p) => setPreviews((prev) => ({ ...prev, [p.screenId]: p }))}
+                onRefresh={loadPreviews}
+              />
+            )}
 
             {s.states && (
               <dl className="states">

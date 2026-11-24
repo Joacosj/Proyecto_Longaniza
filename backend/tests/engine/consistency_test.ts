@@ -320,3 +320,15 @@ Deno.test("una funcionalidad declarada fuera de la interfaz no exige pantalla", 
   fe.featuresWithoutScreen = [{ featureId: "FEAT-99", reason: "x" }];
   assert.match(checkConsistency(ctx).map((i) => i.description).join("\n"), /FEAT-99, que no es/);
 });
+
+Deno.test("featuresWithoutScreen acepta la explicación con otro nombre y exige que exista", async () => {
+  const { parseFrontendArtifact } = await import("../../src/engine/validate.ts");
+  const fe = structuredClone(ejemplo().stages.frontend!) as unknown as Record<string, unknown>;
+  fe.featuresWithoutScreen = [{ featureId: "FEAT-4", description: "Se opera con un comando." }];
+  assert.equal(
+    parseFrontendArtifact(fe, "artifact").featuresWithoutScreen?.[0].reason,
+    "Se opera con un comando.",
+  );
+  fe.featuresWithoutScreen = [{ featureId: "FEAT-4" }];
+  assert.throws(() => parseFrontendArtifact(fe, "artifact"), /reason debe ser texto: una frase/);
+});

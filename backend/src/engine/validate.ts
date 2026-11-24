@@ -380,10 +380,18 @@ export function parseFrontendArtifact(v: unknown, path: string): FrontendArtifac
         `${path}.featuresWithoutScreen`,
         (x, p) => {
           const f = obj(x, p);
-          return {
-            featureId: id(f.featureId, `${p}.featureId`, "FEAT"),
-            reason: str(f.reason, `${p}.reason`),
-          };
+          // Algunos modelos usan otro nombre para la explicación o la entregan como lista.
+          const raw = f.reason ?? f.description ?? f.justification ?? f.how ?? f.explanation;
+          const reason = Array.isArray(raw) && raw.every((r) => typeof r === "string")
+            ? raw.join(" ")
+            : raw;
+          if (typeof reason !== "string" || !reason.trim()) {
+            throw new Error(
+              `${p}.reason debe ser texto: una frase que diga cómo se opera esa funcionalidad ` +
+                `(ej. { "featureId": "FEAT-5", "reason": "El equipo técnico usa el comando create-admin" })`,
+            );
+          }
+          return { featureId: id(f.featureId, `${p}.featureId`, "FEAT"), reason: reason.trim() };
         },
       ),
     }),

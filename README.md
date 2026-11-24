@@ -1,6 +1,6 @@
-# Ideator
+# Longanizator
 
-Proyecto semestral de Programación Profesional (TICS420). Ideator guía a una persona o equipo
+Proyecto semestral de Programación Profesional (TICS420). Longanizator guía a una persona o equipo
 desde una idea informal hasta una especificación técnica que otra IA puede implementar sin
 hacer preguntas adicionales.
 
@@ -23,6 +23,14 @@ docker compose up --build
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000/api/health
 - Las migraciones se aplican solas al iniciar el backend.
+- La IA usa Google Cloud Vertex AI: sigue [docs/google-cloud.md](docs/google-cloud.md) para
+  crear la cuenta de servicio y completar el `.env`. Sin esa configuración, la app arranca con
+  un motor falso de ejemplo.
+
+### En la nube (Google Cloud)
+
+Un solo comando desde Cloud Shell despliega la app en Cloud Run con Cloud SQL, y deja la IA
+cobrándose en otro proyecto: [docs/despliegue-gcp.md](docs/despliegue-gcp.md).
 
 ### Sin Docker
 

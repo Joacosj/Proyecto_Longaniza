@@ -11,6 +11,9 @@ import { inconsistenciesRepo } from "../repositories/inconsistencies.ts";
 import { questionsRepo } from "../repositories/questions.ts";
 import { stagesRepo } from "../repositories/stages.ts";
 import { inTransaction } from "../repositories/tx.ts";
+import { describeChanges } from "../engine/resolve.ts";
+import { runAgent } from "../agents/tracker.ts";
+import type { Inconsistency as Found } from "../engine/types.ts";
 import type { StageDeps } from "./stages.ts";
 
 /** Las etapas con contenido; `review` no se aprueba para generar documentos. */
@@ -115,6 +118,144 @@ export function registerReviewRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     return c.json({ inconsistency });
   });
 
+  // ---------------------------------------------------------------- Resolver con IA
+  // 1) La IA propone un cambio mínimo en la etapa más tardía involucrada (no se guarda nada).
+  r.post(
+    "/:id/inconsistencies/:incId/resolution",
+    requireProjectRole(deps, "editor"),
+    async (c) => {
+      const projectId = c.get("projectId");
+      const inc = await findOpenInconsistency(deps.sql, projectId, c.req.param("incId"));
+      const context = await buildProjectContext(deps.sql, projectId);
+      const result = await runAgent(
+        projectId,
+        {
+          agent: "resolvedor",
+          task: "Buscando cómo resolver una inconsistencia",
+          userName: c.get("user").name,
+        },
+        () => deps.engine.resolveInconsistency({ context, inconsistency: inc }),
+      );
+      if (result.kind === "manual") return c.json({ resolution: result });
+
+      const stage = await stagesRepo(deps.sql).get(projectId, result.stage);
+      if (!stage) throw new ApiError("NOT_FOUND", "Etapa inexistente");
+      return c.json({
+        resolution: {
+          ...result,
+          baseVersion: stage.version,
+          wasApproved: stage.status === "approved",
+          changes: describeChanges(stage.artifact, result.artifact),
+        },
+      });
+    },
+  );
+
+  // 2) El usuario revisó el cambio y lo aplica. Se guarda como versión nueva; si la etapa estaba
+  //    aprobada, el clic del usuario cuenta como su aprobación y las etapas siguientes conservan
+  //    la suya, porque se verifica que el cambio no les crea inconsistencias.
+  r.post(
+    "/:id/inconsistencies/:incId/resolution/apply",
+    requireProjectRole(deps, "editor"),
+    async (c) => {
+      const projectId = c.get("projectId");
+      const userId = c.get("user").id;
+      const body = await readJsonObject(c);
+      const v = new Validator(body);
+      const kind = typeof body.stage === "string" ? body.stage as StageKind : undefined;
+      if (!kind || !(CONTENT_STAGES as StageKind[]).includes(kind) || kind === "definition") {
+        v.fail("stage", "Etapa inválida");
+      }
+      if (!Number.isInteger(body.version)) v.fail("version", "Debe ser un entero");
+      if (
+        typeof body.artifact !== "object" || body.artifact === null || Array.isArray(body.artifact)
+      ) {
+        v.fail("artifact", "Debe ser un objeto JSON");
+      }
+      const summary = typeof body.summary === "string" ? body.summary.slice(0, 500) : "";
+      v.done();
+
+      const out = await inTransaction(deps.sql, async (tx) => {
+        const inc = await findOpenInconsistency(tx, projectId, c.req.param("incId"));
+        const stages = stagesRepo(tx);
+        const stage = await stages.get(projectId, kind!);
+        if (!stage) throw new ApiError("NOT_FOUND", "Etapa inexistente");
+        if (stage.version !== body.version) {
+          throw new ApiError("CONFLICT", "La etapa cambió desde la propuesta: vuelve a resolver", {
+            currentVersion: stage.version,
+          });
+        }
+
+        // El servidor vuelve a validar: no se confía en lo que manda el navegador.
+        const context = await buildProjectContext(tx, projectId);
+        const keyOf = (i: Found) =>
+          `${i.severity}|${[...i.stages].sort().join(",")}|${i.description}`;
+        const before = new Set(deps.engine.checkConsistency(context).map(keyOf));
+        const after = deps.engine.checkConsistency({
+          ...context,
+          stages: { ...context.stages, [kind!]: body.artifact },
+        });
+        if (after.some((i) => keyOf(i) === keyOf(inc))) {
+          throw new ApiError("CONFLICT", "El cambio no resuelve la inconsistencia");
+        }
+        const fresh = after.filter((i) => !before.has(keyOf(i)));
+        if (fresh.length) {
+          throw new ApiError("CONFLICT", "El cambio crea inconsistencias nuevas", {
+            inconsistencies: fresh.map((i) => i.description),
+          });
+        }
+
+        const wasApproved = stage.status === "approved";
+        const saved = await stages.saveArtifact({
+          stageId: stage.id,
+          expectedVersion: stage.version,
+          artifact: body.artifact,
+          userId,
+        });
+        if (!saved) throw new ApiError("CONFLICT", "Otra persona modificó esta etapa");
+        await stages.addVersion({
+          stageId: stage.id,
+          version: saved.version,
+          artifact: body.artifact,
+          source: "ai",
+          userId,
+        });
+        let version = saved.version;
+        if (wasApproved) {
+          version =
+            (await stages.approve({ stageId: stage.id, expectedVersion: version, userId }))!;
+        }
+        await stages.syncProjectProgress(projectId);
+        const synced = await inconsistenciesRepo(tx).sync(projectId, after);
+        // Los hallazgos del Auditor no los reporta el validador: se cierran explícitamente.
+        if (inc.source === "auditor") await inconsistenciesRepo(tx).resolve(inc.id, userId);
+        await auditRepo(tx).log({
+          projectId,
+          userId,
+          action: "inconsistency.ai_resolved",
+          entityType: "stage",
+          entityId: kind!,
+          detail: {
+            agent: "resolvedor",
+            version,
+            approved: wasApproved,
+            inconsistency: inc.description,
+            summary,
+            ...synced,
+          },
+        });
+        return { stage: (await stages.get(projectId, kind!))!, ...synced };
+      });
+
+      const { id: _id, ...stage } = out.stage;
+      return c.json({
+        stage,
+        autoResolved: out.autoResolved,
+        inconsistencies: await inconsistenciesRepo(deps.sql).list(projectId, "open"),
+      });
+    },
+  );
+
   r.post("/:id/documents", requireProjectRole(deps, "editor"), async (c) => {
     const projectId = c.get("projectId");
     const userId = c.get("user").id;
@@ -183,4 +324,13 @@ export function registerReviewRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     );
     return c.body(doc.content);
   });
+}
+
+async function findOpenInconsistency(sql: Sql, projectId: string, incId: string | undefined) {
+  const inc = incId && isUuid(incId)
+    ? await inconsistenciesRepo(sql).find(projectId, incId)
+    : undefined;
+  if (!inc) throw new ApiError("NOT_FOUND", "La inconsistencia no existe en este proyecto");
+  if (inc.status !== "open") throw new ApiError("CONFLICT", "La inconsistencia ya está resuelta");
+  return inc;
 }

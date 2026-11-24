@@ -1,5 +1,5 @@
 /**
- * Generador de los dos documentos finales de Ideator. Determinista: no usa la IA.
+ * Generador de los dos documentos finales de Longanizator. Determinista: no usa la IA.
  *
  * Los documentos los leerá una IA que no participó del proceso, así que cada uno debe ser
  * autocontenido: nombra las cosas por su id y su nombre, repite el contexto necesario y no

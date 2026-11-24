@@ -17,6 +17,9 @@ import type {
   StageSummary,
   StageVersion,
   User,
+  Resolution,
+  AgentStatus,
+  ScreenPreview,
 } from "./types";
 
 export class ApiError extends Error {
@@ -145,6 +148,20 @@ export const client = {
       api<{ question: Question }>(`${p(id)}/questions/${questionId}`, json("PATCH", { status })),
   },
 
+  agents: {
+    status: (id: string) => api<{ agents: AgentStatus[] }>(`${p(id)}/agents`),
+    semanticAudit: (id: string) =>
+      api<{ found: number; added: number; inconsistencies: Inconsistency[] }>(
+        `${p(id)}/semantic-audit`,
+        json("POST"),
+      ),
+    externalReview: (id: string) =>
+      api<{ questions: Question[] }>(`${p(id)}/external-review`, json("POST")),
+    previews: (id: string) => api<{ previews: ScreenPreview[] }>(`${p(id)}/screen-previews`),
+    preview: (id: string, screenId: string) =>
+      api<{ preview: ScreenPreview }>(`${p(id)}/screens/${screenId}/preview`, json("POST")),
+  },
+
   review: {
     get: (id: string) => api<Review>(`${p(id)}/review`),
     check: (id: string) =>
@@ -156,6 +173,17 @@ export const client = {
       api<{ inconsistency: Inconsistency }>(
         `${p(id)}/inconsistencies/${incId}`,
         json("PATCH", { status: "resolved" }),
+      ),
+    aiResolve: (id: string, incId: string) =>
+      api<{ resolution: Resolution }>(`${p(id)}/inconsistencies/${incId}/resolution`, json("POST")),
+    applyResolution: (
+      id: string,
+      incId: string,
+      body: { stage: StageKind; version: number; artifact: Record<string, unknown>; summary: string },
+    ) =>
+      api<{ autoResolved: number; inconsistencies: Inconsistency[] }>(
+        `${p(id)}/inconsistencies/${incId}/resolution/apply`,
+        json("POST", body),
       ),
     generateDocuments: (id: string) =>
       api<{ version: number; documents: DocumentInfo[] }>(`${p(id)}/documents`, json("POST")),

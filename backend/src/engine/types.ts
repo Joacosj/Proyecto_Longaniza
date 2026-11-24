@@ -62,11 +62,48 @@ export interface Engine {
     artifactDraft?: ArtifactByStage[GeneratableStage];
   }>;
 
-  /** Propone el artefacto completo de una etapa usando las etapas anteriores como contexto. */
+  /**
+   * Propone el artefacto completo de una etapa usando las etapas anteriores como contexto.
+   * En la definición también recibe la conversación de la etapa (`history`), para que las
+   * aclaraciones hechas en el chat no se pierdan al apretar "Generar con IA".
+   */
   generate<K extends GeneratableStage>(input: {
     context: ProjectContext;
     stage: K;
+    history?: ChatMessage[];
   }): Promise<{ artifact: ArtifactByStage[K]; questions: NewQuestion[] }>;
+
+  /**
+   * Propone un cambio mínimo en la etapa más tardía involucrada para cerrar una inconsistencia.
+   * Solo devuelve "fix" si el validador confirma que se cierra sin abrir otras; si el arreglo
+   * exige cambiar una etapa anterior, devuelve "manual" con la explicación.
+   */
+  resolveInconsistency(input: {
+    context: ProjectContext;
+    inconsistency: Inconsistency;
+  }): Promise<
+    | {
+      kind: "fix";
+      stage: Exclude<GeneratableStage, "definition">;
+      artifact: ArtifactByStage[Exclude<GeneratableStage, "definition">];
+      summary: string;
+    }
+    | { kind: "manual"; stage: StageKind | null; explanation: string }
+  >;
+
+  /** Auditor semántico: problemas de significado que el validador en código no ve. */
+  auditSemantics(context: ProjectContext): Promise<Inconsistency[]>;
+
+  /**
+   * Revisor externo: lee los documentos finales como la IA implementadora y devuelve las
+   * decisiones que tendría que inventar, como preguntas para la etapa donde se resuelven.
+   */
+  reviewDocuments(context: ProjectContext): Promise<
+    { stage: Exclude<StageKind, "review">; question: string; rationale: string }[]
+  >;
+
+  /** Diseñador visual: HTML autocontenido y seguro que muestra cómo se vería una pantalla. */
+  designScreen(input: { context: ProjectContext; screenId: string }): Promise<{ html: string }>;
 
   /** Revisa una etapa o todo el proyecto. Determinista: no llama a la IA. */
   checkConsistency(context: ProjectContext): Inconsistency[];

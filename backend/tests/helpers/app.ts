@@ -23,6 +23,7 @@ export function buildApp(overrides: Partial<AppDeps> = {}) {
     sql: noDb,
     sessionSecret: TEST_SECRET,
     engine: createFakeEngine(),
+    limits: { auth: 1000, ai: 1000 },
     ...overrides,
   });
 }

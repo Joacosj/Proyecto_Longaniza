@@ -45,5 +45,23 @@ export function auditRepo(sql: Sql) {
         user: userId ? { id: userId, name: userName ?? "" } : null,
       }));
     },
+
+    /** Última acción registrada por cada agente en el proyecto (detail.agent). */
+    async lastByAgent(projectId: string) {
+      return await sql<
+        {
+          agent: string;
+          action: string;
+          entityId: string | null;
+          createdAt: Date;
+          userName: string | null;
+        }[]
+      >`
+        SELECT DISTINCT ON (a.detail->>'agent') a.detail->>'agent' AS agent, a.action,
+               a.entity_id AS "entityId", a.created_at AS "createdAt", u.name AS "userName"
+        FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
+        WHERE a.project_id = ${projectId} AND a.detail ? 'agent'
+        ORDER BY a.detail->>'agent', a.created_at DESC`;
+    },
   };
 }

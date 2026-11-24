@@ -1,5 +1,5 @@
 /**
- * Catálogo de las cinco arquitecturas base de Ideator.
+ * Catálogo de las cinco arquitecturas base de Longanizator.
  * Las cuatro primeras cubren los escenarios iniciales; la quinta es la propuesta del grupo.
  *
  * El catálogo describe opciones. La etapa de arquitectura debe elegir UNA y fijar

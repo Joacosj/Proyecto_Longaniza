@@ -23,7 +23,8 @@ La unión entre ambas es la interfaz `Engine` en `backend/src/engine/types.ts`. 
 reales. Solo `converse` es de relleno.
 
 El motor real ya está conectado en `main.ts`: si el `.env` tiene las variables `LLM_*`, el
-servidor usa la IA (Microsoft Foundry); si no, usa el motor falso y lo avisa al arrancar. Con
+servidor usa la IA (Google Cloud, ver `docs/google-cloud.md`); si no, usa el motor falso y lo
+avisa al arrancar. Con
 `USE_FAKE_ENGINE=1` se fuerza el falso. Las pruebas automáticas siempre usan el falso.
 
 ## Stack y reglas

@@ -7,6 +7,7 @@ import { ApiError } from "../http/errors.ts";
 import { auditRepo } from "../repositories/audit.ts";
 import { projectsRepo } from "../repositories/projects.ts";
 import { registerDialogRoutes } from "./dialog.ts";
+import { registerAgentRoutes } from "./agents.ts";
 import { registerMemberRoutes } from "./members.ts";
 import { registerReviewRoutes } from "./review.ts";
 import { registerStageRoutes, type StageDeps } from "./stages.ts";
@@ -114,6 +115,7 @@ export function projectRoutes(deps: StageDeps) {
   registerStageRoutes(r, deps);
   registerDialogRoutes(r, deps);
   registerReviewRoutes(r, deps);
+  registerAgentRoutes(r, deps);
 
   return r;
 }

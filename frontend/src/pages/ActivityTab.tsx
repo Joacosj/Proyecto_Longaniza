@@ -1,5 +1,5 @@
 import { client } from "../api";
-import { type Project, STAGE_LABEL, type StageKind } from "../types";
+import { AGENT_NAME, type AgentId, type Project, STAGE_LABEL, type StageKind } from "../types";
 import { errorText, formatDate, Loading, Notice, useLoad } from "../ui";
 import type { AuditEntry } from "../types";
 
@@ -22,7 +22,12 @@ function describe(e: AuditEntry): string {
     case "question.reopened": return "reabrió una pregunta";
     case "consistency.checked": return "revisó la consistencia entre etapas";
     case "inconsistency.resolved": return "marcó una inconsistencia como resuelta";
+    case "inconsistency.ai_resolved":
+      return `resolvió una inconsistencia con la IA en ${stage}${d.approved ? " y la aprobó" : ""}`;
     case "documents.generated": return `generó los documentos (versión ${d.version})`;
+    case "agent.audited": return `pidió una auditoría semántica (${d.found} hallazgo(s))`;
+    case "agent.reviewed": return `pidió una revisión externa de los documentos (${d.found} pregunta(s))`;
+    case "agent.designed": return `generó la vista previa de ${e.entityId}`;
     default: return e.action;
   }
 }
@@ -39,6 +44,9 @@ export function ActivityTab({ project }: { project: Project }) {
           <li key={e.id}>
             <span className="muted">{formatDate(e.createdAt)}</span>{" "}
             <strong>{e.user?.name ?? "Alguien"}</strong> {describe(e)}
+            {typeof e.detail?.agent === "string" && (
+              <span className="agent-chip">⚙ {AGENT_NAME[e.detail.agent as AgentId] ?? e.detail.agent}</span>
+            )}
           </li>
         ))}
       </ol>

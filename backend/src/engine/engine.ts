@@ -1,8 +1,8 @@
 /**
- * Motor real de Ideator.
+ * Motor real de Longanizator.
  *
  * - converse: conversación de la etapa de definición (definition.ts).
- * - generate: definición → borrador a partir de lo conversado; demás etapas → propuesta
+ * - generate: definición → borrador a partir de la idea, las respuestas y el chat; demás etapas → propuesta
  *   completa a partir de las anteriores (generate.ts).
  * - checkConsistency, renderDocuments, listArchitectures: deterministas, sin IA.
  *
@@ -15,6 +15,9 @@ import { checkConsistency } from "./consistency.ts";
 import { converseDefinition, type JsonCompleter } from "./definition.ts";
 import { renderDocuments } from "./documents.ts";
 import { generateStage } from "./generate.ts";
+import { resolveInconsistency } from "./resolve.ts";
+import { auditSemantics, reviewDocuments } from "./ia_revision.ts";
+import { designScreen } from "./visual.ts";
 import { completeJson, type LlmConfig, LlmError, loadLlmConfig } from "./llm.ts";
 import type { Engine, GeneratableStage } from "./types.ts";
 
@@ -32,15 +35,15 @@ export function createEngine(complete: JsonCompleter): Engine {
       }),
 
     generate: <K extends GeneratableStage>(
-      { context, stage }: { context: Parameters<Engine["generate"]>[0]["context"]; stage: K },
+      { context, stage, history = [] }: Parameters<Engine["generate"]>[0] & { stage: K },
     ) =>
       withFriendlyErrors(async () => {
         if (stage === "definition") {
           const turn = await converseDefinition(complete, {
             context,
-            history: [],
-            userMessage: "Con la información y las respuestas disponibles, entrega el borrador " +
-              "completo de la definición.",
+            history,
+            userMessage: "Con la idea, las respuestas disponibles y todo lo aclarado en esta " +
+              "conversación, entrega el borrador completo de la definición.",
           });
           if (!turn.artifactDraft) {
             throw new ApiError(
@@ -62,20 +65,26 @@ export function createEngine(complete: JsonCompleter): Engine {
         return { artifact: out.artifact as ArtifactByStage[K], questions: out.questions };
       }),
 
+    resolveInconsistency: (input) =>
+      withFriendlyErrors(() => resolveInconsistency(complete, input)),
+    auditSemantics: (context) => withFriendlyErrors(() => auditSemantics(complete, context)),
+    reviewDocuments: (context) => withFriendlyErrors(() => reviewDocuments(complete, context)),
+    designScreen: (input) => withFriendlyErrors(() => designScreen(complete, input)),
+
     checkConsistency: (ctx) => checkConsistency(ctx),
     renderDocuments: (ctx) => renderDocuments(ctx),
     listArchitectures,
   };
 }
 
-/** Motor conectado a Microsoft Foundry según las variables LLM_* del entorno. */
+/** Motor conectado a la IA configurada en el entorno (Google Cloud por defecto; ver llm.ts). */
 export function createEngineFromEnv(config: LlmConfig = loadLlmConfig()): Engine {
   return createEngine((opts) => completeJson(config, opts));
 }
 
 const FRIENDLY: Record<LlmError["kind"], string> = {
   config: "La IA no está bien configurada",
-  auth: "La API key de la IA no es válida",
+  auth: "Las credenciales de la IA no son válidas o no tienen acceso",
   rate_limit: "Se alcanzó el límite de uso de la IA; intenta en unos minutos",
   timeout: "La IA tardó demasiado en responder; intenta de nuevo",
   network: "No se pudo conectar con la IA",
@@ -89,7 +98,14 @@ async function withFriendlyErrors<T>(fn: () => Promise<T>): Promise<T> {
   } catch (e) {
     if (e instanceof LlmError) {
       console.error(`[motor] ${e.kind}: ${e.message}`);
-      throw new ApiError("INTERNAL", `${FRIENDLY[e.kind]}.`, { reason: e.kind });
+      // Para respuestas inválidas se muestra el motivo: ayuda a decidir si reintentar o ajustar
+      // una etapa anterior. No contiene datos sensibles (son mensajes del validador).
+      const detail = e.kind === "bad_response"
+        ? ` Motivo: ${
+          e.message.replace(/^La IA devolvió una respuesta inválida: /, "").slice(0, 300)
+        }`
+        : "";
+      throw new ApiError("INTERNAL", `${FRIENDLY[e.kind]}.${detail}`, { reason: e.kind });
     }
     throw e;
   }

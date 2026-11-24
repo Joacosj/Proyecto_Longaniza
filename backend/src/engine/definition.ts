@@ -6,7 +6,7 @@
  * - Un borrador con contradicciones internas (ids inexistentes, requisitos huérfanos) se
  *   rechaza y se le pide a la IA corregirlo.
  * - Las preguntas repetidas (ya abiertas o ya respondidas) se descartan.
- * - Si queda alguna pregunta bloqueante abierta, no se entrega borrador: Ideator no puede
+ * - Si queda alguna pregunta bloqueante abierta, no se entrega borrador: Longanizator no puede
  *   completar la definición suponiendo decisiones importantes.
  */
 import type { DefinitionArtifact } from "../contracts/artifacts.ts";

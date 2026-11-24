@@ -1,5 +1,5 @@
 /** Piezas pequeñas compartidas por las pantallas. */
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import type { ProjectRole } from "./types";
 import { ROLE_LABEL } from "./types";
@@ -33,6 +33,67 @@ export function Notice(
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * Confirmación para acciones que no se pueden deshacer. Exige escribir un texto (por ejemplo,
+ * el nombre del proyecto) para evitar borrar algo por un clic accidental.
+ */
+export function ConfirmDialog(
+  { title, children, confirmText, actionLabel, onConfirm, onClose }: {
+    title: string;
+    children: ReactNode;
+    confirmText: string;
+    actionLabel: string;
+    onConfirm: () => Promise<void>;
+    onClose: () => void;
+  },
+) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    const d = ref.current;
+    if (d && !d.open) d.showModal();
+  }, []);
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+    try {
+      await onConfirm();
+    } catch (err) {
+      setError(err);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <dialog ref={ref} className="confirm" onClose={onClose} aria-labelledby="confirm-title">
+      <div className="stack">
+        <h2 id="confirm-title">{title}</h2>
+        <div>{children}</div>
+        {error ? <Notice>{errorText(error)}</Notice> : null}
+        <label>
+          <span>Escribe <code>{confirmText}</code> para confirmar</span>
+          <input value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus />
+        </label>
+        <div className="row">
+          <button
+            type="button"
+            className="danger"
+            disabled={busy || typed.trim() !== confirmText}
+            onClick={confirm}
+          >
+            {busy ? "Eliminando…" : actionLabel}
+          </button>
+          <button type="button" onClick={() => ref.current?.close()} disabled={busy}>Cancelar</button>
+        </div>
+      </div>
+    </dialog>
   );
 }
 

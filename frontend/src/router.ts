@@ -8,7 +8,7 @@ export type Route =
   | { name: "login"; next?: string; error?: string }
   | { name: "register"; next?: string }
   | { name: "projects" }
-  | { name: "project"; id: string; tab: "stages" | "members" | "review" | "activity"; stage?: string }
+  | { name: "project"; id: string; tab: "stages" | "agents" | "members" | "review" | "activity"; stage?: string }
   | { name: "invitation"; token: string }
   | { name: "notFound" };
 
@@ -31,6 +31,7 @@ export function parse(hash: string): Route {
       return { name: "project", id, tab: "stages", stage: parts[3] };
     }
     if (parts[2] === "miembros") return { name: "project", id, tab: "members" };
+    if (parts[2] === "agentes") return { name: "project", id, tab: "agents" };
     if (parts[2] === "revision") return { name: "project", id, tab: "review" };
     if (parts[2] === "actividad") return { name: "project", id, tab: "activity" };
   }
@@ -43,6 +44,7 @@ export const paths = {
   projects: () => "#/proyectos",
   stage: (id: string, kind?: string) => `#/proyectos/${id}/etapas${kind ? `/${kind}` : ""}`,
   members: (id: string) => `#/proyectos/${id}/miembros`,
+  agents: (id: string) => `#/proyectos/${id}/agentes`,
   review: (id: string) => `#/proyectos/${id}/revision`,
   activity: (id: string) => `#/proyectos/${id}/actividad`,
   invitation: (token: string) => `#/invitaciones/${encodeURIComponent(token)}`,
