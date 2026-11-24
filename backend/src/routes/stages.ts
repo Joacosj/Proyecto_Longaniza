@@ -266,7 +266,12 @@ export function registerStageRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
       const agent = STAGE_AGENT[kind as GeneratableStage];
       result = await runAgent(
         projectId,
-        { agent, task: `Generando la etapa ${kind}`, userName: c.get("user").name },
+        {
+          agent,
+          task: `Generando la etapa ${kind}`,
+          userName: c.get("user").name,
+          target: `stage:${kind}`,
+        },
         () => deps.engine.generate({ context, stage: kind as GeneratableStage, history }),
       );
     } catch (e) {

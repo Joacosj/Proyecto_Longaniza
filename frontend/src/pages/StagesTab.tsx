@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAgentJob } from "../agentJobs";
 import { ApiError, client, isVersionConflict } from "../api";
 import { paths } from "../router";
 import { JsonView } from "../stages/JsonView";
@@ -114,6 +115,18 @@ function StageView(
   useEffect(() => {
     setDraft(null);
   }, [stage?.version]);
+  const agentName = STAGE_AGENT_NAME[kind as Exclude<StageKind, "review">];
+  // Si se generó y el usuario cambió de página, el agente siguió trabajando en el servidor:
+  // al volver se muestra que sigue y, cuando termina, se carga su propuesta.
+  const job = useAgentJob(project.id, `stage:${kind}`, () => {
+    loaded.reload();
+    onSaved();
+    setNotice({
+      kind: "ok",
+      text: `El ${agentName} terminó. Revisa la propuesta y el panel de Preguntas antes de aprobar.`,
+    });
+  });
+  const generating = busy === "generate" || !!job;
 
   if (loaded.error) return <Notice>{errorText(loaded.error)}</Notice>;
   if (!stage) return <Loading />;
@@ -215,10 +228,10 @@ function StageView(
         </div>
         {canEdit && (
           <div className="row actions">
-            <button type="button" onClick={() => run("generate")} disabled={!!busy}>
-              {busy === "generate" ? "Generando…" : "Generar con IA"}
+            <button type="button" onClick={() => run("generate")} disabled={!!busy || generating}>
+              {generating ? "Generando…" : "Generar con IA"}
             </button>
-            <button type="button" onClick={() => run("save")} disabled={!dirty || !!busy}>
+            <button type="button" onClick={() => run("save")} disabled={!dirty || !!busy || generating}>
               {busy === "save" ? "Guardando…" : "Guardar cambios"}
             </button>
             {stage.status !== "approved" && (
@@ -226,7 +239,7 @@ function StageView(
                 type="button"
                 className="primary"
                 onClick={() => run("approve")}
-                disabled={dirty || isEmpty || !!busy}
+                disabled={dirty || isEmpty || !!busy || generating}
                 title={dirty ? "Guarda los cambios antes de aprobar" : isEmpty ? "La etapa está vacía" : undefined}
               >
                 {busy === "approve" ? "Aprobando…" : "Aprobar etapa"}
@@ -236,10 +249,11 @@ function StageView(
         )}
       </header>
 
-      {busy === "generate" && (
+      {generating && (
         <p className="thinking" role="status">
-          el agente {STAGE_AGENT_NAME[kind as Exclude<StageKind, "review">]} está trabajando en
-          esta etapa con todo lo aprobado antes; puede tardar unos minutos
+          el agente {agentName} está trabajando en esta etapa con todo lo aprobado antes
+          {job && job.userName ? ` (lo pidió ${job.userName})` : ""}; puede tardar unos minutos.
+          Puedes ir a otra pestaña: el trabajo sigue y se guarda igual
         </p>
       )}
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}

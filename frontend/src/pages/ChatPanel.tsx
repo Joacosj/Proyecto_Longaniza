@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useAgentJob } from "../agentJobs";
 import { client, isVersionConflict } from "../api";
 import type { Message, Project, StageKind } from "../types";
 import { errorText, Loading, Notice, useLoad } from "../ui";
@@ -11,7 +12,7 @@ export function ChatPanel(
     onDraftApplied: () => void;
   },
 ) {
-  const { data, error, setData } = useLoad(() => client.dialog.messages(project.id, kind), [
+  const { data, error, setData, reload } = useLoad(() => client.dialog.messages(project.id, kind), [
     project.id,
     kind,
   ]);
@@ -22,6 +23,12 @@ export function ChatPanel(
   const [info, setInfo] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const canWrite = project.role !== "viewer";
+  // La respuesta pudo llegar mientras el usuario estaba en otra página: se recarga al terminar.
+  const job = useAgentJob(project.id, `chat:${kind}`, () => {
+    reload();
+    onNewQuestions();
+  });
+  const waiting = busy || !!job;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
@@ -88,7 +95,7 @@ export function ChatPanel(
             <p>{m.content}</p>
           </li>
         ))}
-        {busy && (
+        {waiting && (
           <li className="thinking" role="status">la IA está pensando</li>
         )}
         <div ref={endRef} />
@@ -124,8 +131,8 @@ export function ChatPanel(
                 }
               }}
             />
-            <button type="submit" className="primary" disabled={busy || !text.trim()}>
-              {busy ? "Esperando a la IA…" : "Enviar"}
+            <button type="submit" className="primary" disabled={waiting || !text.trim()}>
+              {waiting ? "Esperando a la IA…" : "Enviar"}
             </button>
           </form>
         )

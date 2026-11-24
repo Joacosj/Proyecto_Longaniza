@@ -212,7 +212,7 @@ export interface AgentStatus {
   stage: StageKind | null;
   skills: string[];
   tools: string[];
-  working: { task: string; userName: string; startedAt: string }[];
+  working: { task: string; userName: string; target?: string; startedAt: string }[];
   lastAction: { action: string; entityId: string | null; createdAt: string; userName: string | null } | null;
 }
 

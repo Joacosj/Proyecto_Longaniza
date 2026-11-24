@@ -10,7 +10,7 @@ import { messagesRepo } from "../repositories/messages.ts";
 import { type Question, questionsRepo } from "../repositories/questions.ts";
 import { isStageKind, stagesRepo } from "../repositories/stages.ts";
 import { inTransaction } from "../repositories/tx.ts";
-import { runAgent } from "../agents/tracker.ts";
+import { assertIdle, runAgent } from "../agents/tracker.ts";
 import { STAGE_AGENT } from "../engine/agents.ts";
 import type { StageDeps } from "./stages.ts";
 
@@ -54,6 +54,8 @@ export function registerDialogRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
       role: m.role,
       content: m.content,
     }));
+    // Si la IA aún responde un mensaje anterior, no se acepta otro (quedaría sin respuesta).
+    assertIdle(projectId, `chat:${stage}`);
     // El mensaje del usuario se guarda antes de llamar a la IA: si la IA falla, no se pierde.
     const message = await messages.add({
       projectId,
@@ -66,7 +68,12 @@ export function registerDialogRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     const context = await buildProjectContext(deps.sql, projectId);
     const result = await runAgent(
       projectId,
-      { agent: STAGE_AGENT[stage], task: "Respondiendo en la conversación", userName: user.name },
+      {
+        agent: STAGE_AGENT[stage],
+        task: "Respondiendo en la conversación",
+        userName: user.name,
+        target: `chat:${stage}`,
+      },
       () => deps.engine.converse({ context, stage, history, userMessage: content }),
     );
 

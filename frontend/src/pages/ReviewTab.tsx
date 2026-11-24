@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAgentJob } from "../agentJobs";
 import { ApiError, client } from "../api";
 import { paths } from "../router";
 import {
@@ -19,6 +20,18 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
   const [notice, setNotice] = useState<{ kind: "ok" | "error" | "info"; text: string } | null>(null);
   const [blockedBy, setBlockedBy] = useState<Pending | null>(null);
   const canEdit = project.role !== "viewer";
+  // Si el auditor o el revisor siguieron trabajando mientras el usuario estaba en otra página.
+  const auditJob = useAgentJob(project.id, "audit", () => {
+    reload();
+    setNotice({ kind: "info", text: "El Auditor semántico terminó: revisa la lista de inconsistencias." });
+  });
+  const reviewJob = useAgentJob(project.id, "external-review", () => {
+    reload();
+    onProjectChange();
+    setNotice({ kind: "info", text: "El Revisor externo terminó: sus preguntas están en el panel Preguntas de cada etapa." });
+  });
+  const auditing = busy === "audit" || !!auditJob;
+  const reviewing = busy === "external" || !!reviewJob;
 
   if (error) return <Notice>{errorText(error)}</Notice>;
   if (!data) return <Loading />;
@@ -122,15 +135,15 @@ export function ReviewTab({ project, onProjectChange }: { project: Project; onPr
             </p>
           </div>
           <div className="row">
-            <button type="button" onClick={() => runAgent("audit")} disabled={!!busy}>
-              {busy === "audit" ? "Auditando…" : "⚙ Auditor semántico"}
+            <button type="button" onClick={() => runAgent("audit")} disabled={!!busy || auditing}>
+              {auditing ? "Auditando…" : "⚙ Auditor semántico"}
             </button>
-            <button type="button" onClick={() => runAgent("external")} disabled={!!busy}>
-              {busy === "external" ? "Leyendo documentos…" : "⚙ Revisor externo"}
+            <button type="button" onClick={() => runAgent("external")} disabled={!!busy || reviewing}>
+              {reviewing ? "Leyendo documentos…" : "⚙ Revisor externo"}
             </button>
           </div>
-          {busy === "audit" && <p className="thinking">el Auditor semántico está revisando el proyecto</p>}
-          {busy === "external" && <p className="thinking">el Revisor externo está leyendo los documentos</p>}
+          {auditing && <p className="thinking">el Auditor semántico está revisando el proyecto</p>}
+          {reviewing && <p className="thinking">el Revisor externo está leyendo los documentos</p>}
         </section>
       )}
 

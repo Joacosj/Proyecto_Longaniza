@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAgentJob } from "../agentJobs";
 import { client } from "../api";
 import type { ScreenPreview as Preview } from "../types";
 import { errorText, formatDate, Notice } from "../ui";
@@ -10,15 +11,22 @@ import { errorText, formatDate, Notice } from "../ui";
  * contenido que solo permite estilos en línea.
  */
 export function ScreenPreview(
-  { projectId, screenId, screenName, initial, onSaved }: {
+  { projectId, screenId, screenName, initial, onSaved, onRefresh }: {
     projectId: string;
     screenId: string;
     screenName: string;
     initial?: Preview;
     onSaved: (p: Preview) => void;
+    /** Recarga los diseños guardados (cuando el agente terminó mientras no se miraba). */
+    onRefresh: () => void;
   },
 ) {
-  const [busy, setBusy] = useState(false);
+  const [localBusy, setBusy] = useState(false);
+  const job = useAgentJob(projectId, `preview:${screenId}`, () => {
+    onRefresh();
+    setView("design");
+  });
+  const busy = localBusy || !!job;
   const [error, setError] = useState<unknown>(null);
   const [view, setView] = useState<"wire" | "design">(initial ? "design" : "wire");
 

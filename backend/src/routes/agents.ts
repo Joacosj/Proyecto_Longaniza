@@ -47,7 +47,12 @@ export function registerAgentRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     }
     const found = await runAgent(
       projectId,
-      { agent: "auditor", task: "Auditando reglas, permisos y casos borde", userName: user.name },
+      {
+        agent: "auditor",
+        task: "Auditando reglas, permisos y casos borde",
+        userName: user.name,
+        target: "audit",
+      },
       () => deps.engine.auditSemantics(context),
     );
     const added = await inTransaction(deps.sql, async (tx) => {
@@ -88,6 +93,7 @@ export function registerAgentRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
         agent: "revisor",
         task: "Leyendo los documentos como la IA implementadora",
         userName: user.name,
+        target: "external-review",
       },
       () => deps.engine.reviewDocuments(context),
     );
@@ -138,7 +144,12 @@ export function registerAgentRoutes(r: Hono<ProjectEnv>, deps: StageDeps) {
     }
     const { html } = await runAgent(
       projectId,
-      { agent: "disenador-visual", task: `Dibujando ${screenId}`, userName: user.name },
+      {
+        agent: "disenador-visual",
+        task: `Dibujando ${screenId}`,
+        userName: user.name,
+        target: `preview:${screenId}`,
+      },
       () => deps.engine.designScreen({ context, screenId }),
     );
     const preview = await inTransaction(deps.sql, async (tx) => {

@@ -1,6 +1,6 @@
 import type { StageComponentProps } from "../types";
 import type { FrontendArtifact } from "./contracts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { client } from "../api";
 import type { ScreenPreview as Preview } from "../types";
 import { Mermaid } from "./Mermaid";
@@ -37,12 +37,13 @@ export function FrontendStage(
   { artifact, editable, onChange, projectId }: StageComponentProps<FrontendArtifact>,
 ) {
   const [previews, setPreviews] = useState<Record<string, Preview>>({});
-  useEffect(() => {
+  const loadPreviews = useCallback(() => {
     if (!projectId) return;
     client.agents.previews(projectId)
       .then(({ previews }) => setPreviews(Object.fromEntries(previews.map((p) => [p.screenId, p]))))
       .catch(() => {});
   }, [projectId]);
+  useEffect(loadPreviews, [loadPreviews]);
   const screens = artifact.screens ?? [];
   const names = new Map(screens.map((s) => [s.id, s.name]));
 
@@ -115,6 +116,7 @@ export function FrontendStage(
                 screenName={s.name}
                 initial={previews[s.id]}
                 onSaved={(p) => setPreviews((prev) => ({ ...prev, [p.screenId]: p }))}
+                onRefresh={loadPreviews}
               />
             )}
 
